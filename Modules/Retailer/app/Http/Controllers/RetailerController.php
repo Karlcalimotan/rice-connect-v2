@@ -25,7 +25,8 @@ class RetailerController extends Controller
 
         return Inertia::render('Retailer::Marketplace', [
             'available_rice' => $listings,
-            'retailer_municipality' => $retailerMun ? $retailerMun->name : 'Iloilo City'
+            'retailer_municipality' => $retailerMun ? $retailerMun->name : 'Iloilo City',
+            'design_css_url' => '/design/rice-connect-dashboard/styles.css',
         ]);
     }
 
@@ -99,7 +100,8 @@ class RetailerController extends Controller
             ->get();
 
         return Inertia::render('Retailer::MyOrders', [
-            'orders' => $orders
+            'orders' => $orders,
+            'design_css_url' => '/design/rice-connect-dashboard/styles.css',
         ]);
     }
 
@@ -111,7 +113,8 @@ class RetailerController extends Controller
             ->get();
 
         return Inertia::render('Retailer::MyPurchases', [
-            'orders' => $orders
+            'orders' => $orders,
+            'design_css_url' => '/design/rice-connect-dashboard/styles.css',
         ]);
     }
 

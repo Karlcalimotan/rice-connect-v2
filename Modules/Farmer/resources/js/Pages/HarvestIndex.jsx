@@ -11,16 +11,17 @@ export default function HarvestIndex({ batches }) {
                     </h2>
                     <Link
                         href={route('farmer.harvest.create')}
-                        className="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                        className="flex items-center gap-3 rounded-[1.5rem] border border-[#c3a153]/20 bg-[rgba(255,248,230,0.86)] px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                     >
-                        Log New Harvest
+                        <div className="flex h-8 w-8 items-center justify-center rounded-[1.1rem] bg-[#103227] text-sm font-black text-[#f6ecd1]">+</div>
+                        <span className="text-sm font-semibold text-[#17362b]">Log New Harvest</span>
                     </Link>
                 </div>
             }
         >
             <Head title="Farmer Harvest" />
 
-            <div className="py-12">
+            <div className="py-12 rc-harvest-bg">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
@@ -35,13 +36,14 @@ export default function HarvestIndex({ batches }) {
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full divide-y divide-gray-200">
+                                        <caption className="sr-only">Harvest batches table</caption>
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variety</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (kg)</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variety</th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (kg)</th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
@@ -59,9 +61,9 @@ export default function HarvestIndex({ batches }) {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{batch.harvest_date}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        <Link href={route('farmer.harvest.edit', batch.id)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</Link>
+                                                        <Link href={route('farmer.harvest.edit', batch.id)} className="text-indigo-600 hover:text-indigo-900 mr-4" aria-label={`Edit harvest ${batch.id}`}>Edit</Link>
                                                         {batch.status === 'pending' && (
-                                                            <button className="text-green-600 hover:text-green-900">Accept Order</button>
+                                                            <button className="text-green-600 hover:text-green-900" aria-label={`Accept order for harvest ${batch.id}`}>Accept Order</button>
                                                         )}
                                                     </td>
                                                 </tr>

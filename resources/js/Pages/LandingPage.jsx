@@ -66,7 +66,7 @@ export default function LandingPage() {
                 <section className="relative min-h-screen flex flex-col">
                     <div 
                         className="absolute inset-0 z-0 bg-fixed bg-cover bg-center"
-                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2000&q=80')" }}
+                        style={{ backgroundImage: "url('resources/css/1.jpeg')" }}
                     />
                     <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/80 via-black/40 to-[#030506]" />
                     <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.15),_transparent_40%)]" />
