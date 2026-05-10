@@ -15,6 +15,18 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                rice: {
+                    deep: 'var(--bg-forest)',
+                    forest: 'var(--bg-forest)',
+                    darkMoss: 'var(--sage-accent)',
+                    sideSage: 'var(--sage)',
+                    paleMoss: 'var(--pale-moss, var(--paper))',
+                    parchment: 'var(--paper)',
+                    mutedOlive: 'var(--muted-brown)',
+                    ink: 'var(--text-dark)'
+                }
+            }
         },
     },
 

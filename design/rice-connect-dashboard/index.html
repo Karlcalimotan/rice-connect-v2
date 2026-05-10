@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rice Connect — Dashboard Prototype</title>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="laptop">
+    <div class="screen">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>Rice Connect</h1>
+          <p class="subtitle">Supply Chain Ledger</p>
+        </div>
+        <nav class="nav">
+          <a class="nav-item active">Overview</a>
+          <a class="nav-item">Shipments</a>
+          <a class="nav-item">Origins</a>
+          <a class="nav-item">Trust</a>
+          <a class="nav-item">Contracts</a>
+          <a class="nav-item">Settings</a>
+        </nav>
+        <div class="botanical">
+          <!-- Botanical SVG image -->
+          <img src="assets/rice-stalk.svg" alt="rice stalk illustration">
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="header">
+          <div class="header-left">
+            <h2>Supply Chain Dashboard</h2>
+            <p class="muted">Dark Academia • Vintage Botanical</p>
+          </div>
+          <div class="header-right">
+            <div class="profile">AM</div>
+          </div>
+        </header>
+
+        <section class="content">
+          <div class="grid">
+            <section class="card summary">
+              <h3>Supply Chain Summary</h3>
+              <div class="chart-wrap">
+                <!-- Inline SVG area chart -->
+                <svg viewBox="0 0 800 240" preserveAspectRatio="none" class="area-chart" aria-hidden>
+                  <defs>
+                    <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stop-color="#c96a3a" stop-opacity="0.8" />
+                      <stop offset="100%" stop-color="#c96a3a" stop-opacity="0.1" />
+                    </linearGradient>
+                    <linearGradient id="g2" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stop-color="#6b8b3b" stop-opacity="0.75" />
+                      <stop offset="100%" stop-color="#6b8b3b" stop-opacity="0.06" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="transparent"/>
+                  <path d="M0,180 C80,120 160,140 240,90 C320,40 400,80 480,60 C560,40 640,90 720,70 C800,50 880,40 960,20 L960,240 L0,240 Z" transform="scale(0.83,1)" fill="url(#g1)" opacity="0.9"></path>
+                  <path d="M0,200 C100,140 200,150 300,100 C400,50 500,120 600,90 C700,60 800,110 900,90 L900,240 L0,240 Z" transform="scale(0.83,1) translate(0,0)" fill="url(#g2)" opacity="0.55"></path>
+                </svg>
+              </div>
+              <div class="summary-stats">
+                <div>
+                  <span class="big">1,284</span>
+                  <span class="label">Active Shipments</span>
+                </div>
+                <div>
+                  <span class="big">94%</span>
+                  <span class="label">Verification Rate</span>
+                </div>
+                <div>
+                  <span class="big">128</span>
+                  <span class="label">Smart Contracts</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="card cards">
+              <div class="card-row">
+                <div class="mini-card">
+                  <div class="icon">
+                    <!-- P2P Icon -->
+                    <img src="assets/icon-p2p.svg" alt="peer to peer">
+                  </div>
+                  <div class="meta">
+                    <strong>Peer-to-Peer Verification</strong>
+                    <p class="muted">Consensus across 12 nodes</p>
+                  </div>
+                </div>
+
+                <div class="mini-card">
+                  <div class="icon">
+                    <img src="assets/icon-smart-contract.svg" alt="smart contracts">
+                  </div>
+                  <div class="meta">
+                    <strong>Smart Contracts</strong>
+                    <p class="muted">Automated settlement rules</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-row">
+                <div class="mini-card opacity">
+                  <div class="meta">
+                    <strong>Origins</strong>
+                    <p class="muted">Map-linked provenance records</p>
+                  </div>
+                </div>
+                <div class="mini-card opacity">
+                  <div class="meta">
+                    <strong>Quality Index</strong>
+                    <p class="muted">Average 4.6 / 5</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

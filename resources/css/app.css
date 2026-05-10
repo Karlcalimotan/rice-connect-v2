@@ -1,3 +1,33 @@
+@import url('../../design/tokens/theme-green.css');
+/* Import the Rice Connect dashboard prototype styles to apply across the project */
+@import url('../../design/rice-connect-dashboard/styles.css');
+
+:root{
+	/* Map legacy app variables to design tokens */
+	--bg-deep: var(--bg-forest);
+	--bg-forest: var(--bg-forest);
+	--dark-moss: var(--sage-accent);
+	--side-sage: var(--sage);
+	--pale-moss: color-mix(in srgb, var(--sage) 36%, var(--paper));
+	--card-parchment: var(--paper);
+	--muted-olive: var(--muted-brown);
+	--ink: var(--text-dark);
+}
+
+/* Utility helpers for the Rice Connect theme */
+.rc-bg {
+	background-color: var(--bg-deep);
+}
+.rc-sidebar {
+	background-color: var(--side-sage);
+	color: var(--ink);
+}
+.rc-card {
+	background-color: var(--card-parchment);
+	border: 1px solid var(--muted-olive);
+	color: var(--ink);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

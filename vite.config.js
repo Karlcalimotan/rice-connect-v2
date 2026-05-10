@@ -23,4 +23,12 @@ export default defineConfig({
             'Modules': path.resolve(__dirname, 'Modules'),
         },
     },
+    optimizeDeps: {
+        exclude: [/^react-aria\/.+$/, /^@react-aria\/.+$/],
+    },
+    build: {
+        rollupOptions: {
+            external: [/^react-aria\/.+$/],
+        },
+    },
 });

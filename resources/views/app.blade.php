@@ -8,7 +8,7 @@
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=playfair-display:400,500,600,700|libre-baskerville:400,700|source-sans-3:400,500,600,700&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @routes
@@ -16,7 +16,7 @@
         @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
         @inertiaHead
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-['Source_Sans_3',sans-serif] antialiased">
         @inertia
     </body>
 </html>
