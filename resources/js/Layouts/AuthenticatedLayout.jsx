@@ -30,6 +30,31 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Dashboard
                                 </NavLink>
+                                {user.role === 'farmer' && (
+                                    <NavLink href={route('farmer.harvest')} active={route().current('farmer.*')}>
+                                        My Harvest
+                                    </NavLink>
+                                )}
+                                {user.role === 'miller' && (
+                                    <>
+                                        <NavLink href={route('miller.marketplace')} active={route().current('miller.marketplace')}>
+                                            Marketplace
+                                        </NavLink>
+                                        <NavLink href={route('miller.transport')} active={route().current('miller.transport')}>
+                                            Transport Hub
+                                        </NavLink>
+                                    </>
+                                )}
+                                {user.role === 'retailer' && (
+                                    <NavLink href={route('retailer.marketplace')} active={route().current('retailer.*')}>
+                                        Rice Store
+                                    </NavLink>
+                                )}
+                                {user.role === 'driver' && (
+                                    <NavLink href={route('driver.dashboard')} active={route().current('driver.*')}>
+                                        Deliveries
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -42,7 +67,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 type="button"
                                                 className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
                                             >
-                                                {user.name}
+                                                {user.first_name} {user.last_name} ({user.role})
 
                                                 <svg
                                                     className="-me-0.5 ms-2 h-4 w-4"
@@ -139,7 +164,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     <div className="border-t border-gray-200 pb-1 pt-4">
                         <div className="px-4">
                             <div className="text-base font-medium text-gray-800">
-                                {user.name}
+                                {user.first_name} {user.last_name}
                             </div>
                             <div className="text-sm font-medium text-gray-500">
                                 {user.email}

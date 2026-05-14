@@ -20,9 +20,52 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
+        'username',
+        'contact',
+        'role',
+        'municipality',
+        'province',
+        'phone_number',
         'password',
+        'town_id',
+        'municipality_id',
+        'vehicle_type',
+        'license_number',
+        'is_verified_driver',
     ];
+
+    public function town()
+    {
+        return $this->belongsTo(\App\Models\Town::class);
+    }
+
+    /**
+     * Relationship: Miller can have many drivers.
+     */
+    public function drivers()
+    {
+        return $this->belongsToMany(User::class, 'miller_driver', 'miller_id', 'driver_id')
+                    ->withPivot('is_active')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Relationship: Driver can work for many millers.
+     */
+    public function millers()
+    {
+        return $this->belongsToMany(User::class, 'miller_driver', 'driver_id', 'miller_id')
+                    ->withPivot('is_active')
+                    ->withTimestamps();
+    }
+
+    public function harvestBatches()
+    {
+        return $this->hasMany(\Modules\Farmer\Models\HarvestBatch::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -44,6 +87,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_verified_driver' => 'boolean',
         ];
     }
 }

@@ -18,10 +18,20 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Role-based Dashboard Aliases
+Route::middleware(['auth'])->group(function () {
+    Route::get('/farmer/dashboard', function() { return redirect()->route('farmer.harvest'); })->name('farmer.dashboard');
+    Route::get('/miller/dashboard', function() { return redirect()->route('miller.marketplace'); })->name('miller.dashboard');
+    Route::get('/retailer/dashboard', function() { return redirect()->route('retailer.marketplace'); })->name('retailer.dashboard');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Notifications
+    Route::post('/notifications/{id}/mark-as-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
 });
 
 require __DIR__.'/auth.php';
