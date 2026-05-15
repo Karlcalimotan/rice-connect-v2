@@ -34,4 +34,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{id}/mark-as-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
 });
 
+// Analytics pages (Inertia)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/analytics/farmer', [\App\Http\Controllers\AnalyticsPageController::class, 'farmer'])->name('analytics.farmer');
+    Route::get('/analytics/miller', [\App\Http\Controllers\AnalyticsPageController::class, 'miller'])->name('analytics.miller');
+    Route::get('/analytics/retailer', [\App\Http\Controllers\AnalyticsPageController::class, 'retailer'])->name('analytics.retailer');
+    Route::get('/analytics/admin', [\App\Http\Controllers\AnalyticsPageController::class, 'admin'])->name('analytics.admin');
+});
+
 require __DIR__.'/auth.php';

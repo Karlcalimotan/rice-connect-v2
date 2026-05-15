@@ -92,6 +92,7 @@ export default function Register() {
                         <option value="miller">Miller</option>
                         <option value="retailer">Retailer</option>
                         <option value="driver">Driver</option>
+                        <option value="admin">Admin</option>
                     </select>
                     <InputError message={errors.role} className="mt-2" />
                 </div>

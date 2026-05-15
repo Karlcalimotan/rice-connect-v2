@@ -12,9 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'farmer', 'miller', 'retailer', 'driver') DEFAULT 'farmer'");
-        });
+        // Only run raw ALTER statements on MySQL. SQLite does not support ENUM/ALTER COLUMN.
+        $driver = DB::getPdo() ? DB::getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME) : null;
+        if ($driver === 'mysql') {
+            Schema::table('users', function (Blueprint $table) {
+                DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'farmer', 'miller', 'retailer', 'driver') DEFAULT 'farmer'");
+            });
+        }
     }
 
     /**
@@ -22,8 +26,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'farmer', 'miller', 'retailer') DEFAULT 'farmer'");
-        });
+        $driver = DB::getPdo() ? DB::getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME) : null;
+        if ($driver === 'mysql') {
+            Schema::table('users', function (Blueprint $table) {
+                DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'farmer', 'miller', 'retailer') DEFAULT 'farmer'");
+            });
+        }
     }
 };
