@@ -19,6 +19,17 @@ export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    // Sidebar Icons
+    const sidebarIcons = {
+        Analytics: () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeWidth="2" d="M3 3v18h18" />
+                <path strokeWidth="2" d="M7 14l3-3 3 2 4-6" />
+            </svg>
+        ),
+    };
+
+
     const handleNavClick = () => {
         if (window.innerWidth < 1024) {
             setIsSidebarOpen(false);
@@ -67,6 +78,9 @@ export default function AuthenticatedLayout({ header, children }) {
                             
                             {user.role === 'farmer' && (
                                 <>
+                                    <NavLink href={route('analytics.farmer')} active={route().current('analytics.farmer')} onClick={handleNavClick}>
+                                        {sidebarIcons.Analytics()} <span>Analytics</span>
+                                    </NavLink>
                                     <NavLink href={route('farmer.harvest')} active={route().current('farmer.harvest')} onClick={handleNavClick}>
                                         <Icons.Console /> <span>Harvest Logs</span>
                                     </NavLink>
@@ -76,11 +90,16 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </>
                             )}
 
+
                             {user.role === 'miller' && (
                                 <>
+                                    <NavLink href={route('analytics.miller')} active={route().current('analytics.miller')} onClick={handleNavClick}>
+                                        {sidebarIcons.Analytics()} <span>Analytics</span>
+                                    </NavLink>
                                     <NavLink href={route('miller.marketplace')} active={route().current('miller.marketplace')} onClick={handleNavClick}>
                                         <Icons.Market /> <span>Marketplace</span>
                                     </NavLink>
+
                                     <NavLink href={route('miller.inventory')} active={route().current('miller.inventory')} onClick={handleNavClick}>
                                         <Icons.Inventory /> <span>Palay Inventory</span>
                                     </NavLink>
@@ -98,7 +117,11 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             {user.role === 'retailer' && (
                                 <>
+                                    <NavLink href={route('analytics.retailer')} active={route().current('analytics.retailer')} onClick={handleNavClick}>
+                                        {sidebarIcons.Analytics()} <span>Analytics</span>
+                                    </NavLink>
                                     <NavLink href={route('retailer.marketplace')} active={route().current('retailer.marketplace')} onClick={handleNavClick}>
+
                                         <Icons.Market /> <span>Browse Rice</span>
                                     </NavLink>
                                     <NavLink href={route('retailer.orders')} active={route().current('retailer.orders')} onClick={handleNavClick}>
@@ -118,7 +141,11 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             {user.role === 'admin' && (
                                 <>
+                                    <a href={route('analytics.admin')} className="nav-link-v2" onClick={handleNavClick}>
+                                        {sidebarIcons.Analytics()} <span>Analytics</span>
+                                    </a>
                                     <a href="/admin/dashboard" className="nav-link-v2">
+
                                         <Icons.Console /> <span>Admin Hub</span>
                                     </a>
                                     <a href="/admin/municipalities" className="nav-link-v2">
@@ -177,7 +204,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </Dropdown.Trigger>
                                 <Dropdown.Content>
                                     <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
-                                    <Dropdown.Link href={route('logout')} method="post" as="button">Log Out</Dropdown.Link>
+                                    <Dropdown.Link href={route('logout')} method="post" as="button" onClick={() => { setOpen?.(false); }}>Log Out</Dropdown.Link>
                                 </Dropdown.Content>
                             </Dropdown>
                         </div>

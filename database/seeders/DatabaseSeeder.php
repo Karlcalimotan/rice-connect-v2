@@ -23,14 +23,18 @@ class DatabaseSeeder extends Seeder
             \Modules\Retailer\Database\Seeders\RetailerDatabaseSeeder::class,
             \Modules\Driver\Database\Seeders\DriverDatabaseSeeder::class,
             \Modules\MillerAdmin\Database\Seeders\MillerAdminDatabaseSeeder::class,
+            AnalyticsSeeder::class,
         ]);
 
-        User::factory()->create([
-            'first_name' => 'Mary',
-            'last_name' => 'Camille',
-            'email' => 'camillemary213@gmail.com',
-            'username' => 'Marycamille1616',
-            'contact' => '09123456789',
-        ]);
+        // Avoid duplicate username/email on repeated `php artisan migrate --seed`.
+        User::updateOrCreate(
+            ['username' => 'Marycamille1616'],
+            [
+                'first_name' => 'Mary',
+                'last_name' => 'Camille',
+                'email' => 'camillemary213@gmail.com',
+                'contact' => '09123456789',
+            ]
+        );
     }
 }
