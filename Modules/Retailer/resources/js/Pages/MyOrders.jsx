@@ -30,13 +30,35 @@ export default function MyOrders({ auth, orders }) {
                                         <p className="text-3xl font-black text-green-600">₱{Number(order.total_price).toLocaleString()}</p>
                                     </div>
 
-                                    <div className="flex flex-col items-center md:items-end gap-2">
-                                        <span className={`px-4 py-1 border-2 border-black font-black uppercase text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
-                                            order.status === 'pending_pickup' ? 'bg-yellow-400' : 'bg-blue-400'
-                                        }`}>
-                                            {order.status.replace('_', ' ')}
-                                        </span>
-                                        <p className="text-[10px] font-bold text-gray-500 uppercase">{new Date(order.created_at).toLocaleDateString()}</p>
+                                    <div className="flex flex-col items-center md:items-end gap-3">
+                                        <div className="flex flex-col items-end">
+                                            <span className={`px-4 py-1 border-2 border-black font-black uppercase text-[10px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
+                                                order.status === 'completed' ? 'bg-green-400' : 'bg-blue-400'
+                                            }`}>
+                                                {order.status.replace('_', ' ')}
+                                            </span>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase mt-2">{new Date(order.created_at).toLocaleDateString()}</p>
+                                        </div>
+
+                                        {order.delivery_status === 'Delivered' && order.status !== 'completed' && (
+                                            <button
+                                                onClick={() => {
+                                                    if(confirm('Have you received all items in good condition?')) {
+                                                        import('@inertiajs/react').then(m => m.router.patch(route('retailer.order.confirm_received', order.id)));
+                                                    }
+                                                }}
+                                                className="bg-emerald-950 text-white px-6 py-2 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:scale-95"
+                                            >
+                                                Confirm Receipt
+                                            </button>
+                                        )}
+
+                                        {order.status === 'completed' && (
+                                            <div className="flex items-center gap-1 text-green-600">
+                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+                                                <span className="text-[10px] font-black uppercase">Finalized</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))

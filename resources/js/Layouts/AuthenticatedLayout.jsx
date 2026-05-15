@@ -141,16 +141,15 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             {user.role === 'admin' && (
                                 <>
-                                    <a href={route('analytics.admin')} className="nav-link-v2" onClick={handleNavClick}>
+                                    <NavLink href={route('admin.analytics')} active={route().current('admin.analytics')} onClick={handleNavClick}>
                                         {sidebarIcons.Analytics()} <span>Analytics</span>
-                                    </a>
-                                    <a href="/admin/dashboard" className="nav-link-v2">
-
+                                    </NavLink>
+                                    <NavLink href={route('admin.dashboard')} active={route().current('admin.dashboard')} onClick={handleNavClick}>
                                         <Icons.Console /> <span>Admin Hub</span>
-                                    </a>
-                                    <a href="/admin/municipalities" className="nav-link-v2">
+                                    </NavLink>
+                                    <NavLink href={route('admin.municipalities.index')} active={route().current('admin.municipalities.index')} onClick={handleNavClick}>
                                         <Icons.Logistics /> <span>Geography</span>
-                                    </a>
+                                    </NavLink>
                                 </>
                             )}
                         </div>
@@ -204,7 +203,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </Dropdown.Trigger>
                                 <Dropdown.Content>
                                     <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
-                                    <Dropdown.Link href={route('logout')} method="post" as="button" onClick={() => { setOpen?.(false); }}>Log Out</Dropdown.Link>
+                                    <Dropdown.Link href={route('logout')} method="post" as="button">Log Out</Dropdown.Link>
                                 </Dropdown.Content>
                             </Dropdown>
                         </div>

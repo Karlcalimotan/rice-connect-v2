@@ -59,9 +59,9 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'name' => trim($validated['first_name'].' '.$validated['last_name']),
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
+            'username' => \Illuminate\Support\Str::slug($validated['first_name'] . $validated['last_name']) . rand(100, 999),
             'contact' => $validated['contact'] ?? null,
             'role' => $validated['role'],
             'email' => $validated['email'],
@@ -70,17 +70,17 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect($this->dashboardRoute($user->role));
+        return redirect()->intended($this->dashboardRoute($user->role));
     }
 
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request)
     {
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return Inertia::location(route('landing'));
     }
 
     protected function dashboardRoute(string $role): string
