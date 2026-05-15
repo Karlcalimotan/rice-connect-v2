@@ -1,57 +1,97 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import React from 'react';
 
-export default function Marketplace({ batches = [] }) {
+export default function Marketplace({ auth, batches, miller_town }) {
+
+    const handleInquiry = (id) => {
+        router.post(route('miller.interest', id));
+    };
+
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Palay Marketplace
-                </h2>
-            }
-        >
-            <Head title="Miller Marketplace" />
+        <AuthenticatedLayout user={auth?.user}>
+            <Head title="Palay Marketplace" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {!batches || batches.length === 0 ? (
-                            <div className="col-span-full text-center py-12 bg-white rounded-lg shadow">
-                                <p className="text-gray-500">No palay listings available right now.</p>
-                            </div>
-                        ) : (
-                            batches.map((item) => (
-                                <div key={item.id} className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-100 hover:shadow-md transition-shadow">
-                                    <div className="p-6">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900">{item.rice_variety}</h3>
-                                                <p className="text-sm text-gray-500">From: {item.user?.first_name} {item.user?.last_name}</p>
-                                            </div>
-                                            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded uppercase">
-                                                {item.condition}
-                                            </span>
-                                        </div>
-                                        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <span className="text-gray-500 block">Weight</span>
-                                                <span className="font-semibold text-gray-900">{item.total_weight} kg</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-gray-500 block">Harvested</span>
-                                                <span className="font-semibold text-gray-900">{item.harvest_date}</span>
-                                            </div>
-                                        </div>
-                                        <div className="mt-6">
-                                            <button 
-                                                className="w-full inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150"
-                                            >
-                                                Express Interest
-                                            </button>
+            <div className="py-12 bg-transparent min-h-screen">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <div className="flex items-center gap-3 mb-10">
+                        <div className="w-1.5 h-8 bg-emerald-600 rounded-full shadow-[0_0_15px_rgba(5,150,105,0.4)]"></div>
+                        <h2 className="text-5xl font-black uppercase tracking-tighter text-emerald-950 leading-none">
+                            {miller_town ? `Market: ${miller_town}` : 'Palay Marketplace'}
+                        </h2>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {batches && batches.length > 0 ? (
+                            batches.map((batch) => (
+                            <div key={batch.id} className="glass-card group relative p-8">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl"></div>
+                                
+                                <div className="relative flex justify-between items-start mb-6">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase text-emerald-900/30 tracking-[0.4em] mb-2">Palay Batch</p>
+                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-gray-900 leading-none">{batch.rice_variety}</h3>
+                                    </div>
+                                    <div className={`px-4 py-1.5 rounded-full border-2 border-black font-black text-[10px] uppercase ${
+                                        batch.condition === 'fresh' ? 'bg-yellow-400 text-black' : 'bg-emerald-500 text-white'
+                                    }`}>
+                                        {batch.condition === 'fresh' ? '🌾 Fresh' : '☀️ Ready'}
+                                    </div>
+                                </div>
+
+                                <div className="relative bg-emerald-900 text-white rounded-3xl p-6 mb-8 shadow-xl">
+                                    <div className="relative flex justify-between items-end">
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400/60 mb-2">Est. Inventory</p>
+                                            <p className="text-3xl font-black">{batch.total_sacks ?? batch.number_of_bags} Sacks</p>
                                         </div>
                                     </div>
                                 </div>
-                            ))
+
+                                <div className="relative space-y-4 mb-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-black text-gray-400">
+                                            👤
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest leading-none mb-1">Farmer Partner</p>
+                                            <p className="text-sm font-black text-gray-900">{batch.user?.first_name} {batch.user?.last_name}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+                                            📍
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest leading-none mb-1">Location</p>
+                                            <p className="text-sm font-black text-gray-900">
+                                                {batch.location || `${batch.user?.municipality}, ${batch.user?.province}`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="relative">
+                                    {batch.interests?.some(i => i.miller_id === auth?.user?.id) ? (
+                                        <div className="w-full bg-emerald-950 text-emerald-400 font-black py-5 rounded-2xl text-center uppercase tracking-widest text-xs flex flex-col gap-1">
+                                            <span>Interest Sent</span>
+                                            <span className="text-[8px] text-emerald-600 tracking-[0.4em]">Awaiting Approval</span>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => handleInquiry(batch.id)}
+                                            className="btn-2026 w-full !bg-black !text-white !py-5"
+                                        >
+                                            Express Interest
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                        ) : (
+                            <div className="col-span-full py-40 glass-card text-center">
+                                <p className="text-emerald-950/40 font-black uppercase tracking-[0.4em] text-xl">Market Currently Empty</p>
+                            </div>
                         )}
                     </div>
                 </div>

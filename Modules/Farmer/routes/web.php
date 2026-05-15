@@ -10,5 +10,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/farmer/harvest/{id}/edit', [FarmerController::class, 'edit'])->name('farmer.harvest.edit');
     Route::delete('/farmer/harvest/{id}', [FarmerController::class, 'destroy'])->name('farmer.harvest.destroy');
     Route::patch('/farmer/harvest/{id}', [FarmerController::class, 'update'])->name('farmer.harvest.update');
-    Route::post('/farmer/accept/{id}', [FarmerController::class, 'acceptHandshake'])->name('farmer.accept');
+    Route::get('/farmer/offers', [FarmerController::class, 'offers'])->name('farmer.offers');
+    Route::post('/farmer/accept/{id}', [FarmerController::class, 'acceptHandshake'])->name('farmer.accept-handshake');
 });

@@ -19,4 +19,9 @@ class FinishedRiceStock extends Model
     {
         return $this->belongsTo(User::class, 'miller_id');
     }
+
+    public function deliverySetting()
+    {
+        return $this->hasOne(MillerDeliverySetting::class, 'miller_id', 'miller_id');
+    }
 }

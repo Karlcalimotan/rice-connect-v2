@@ -37,9 +37,9 @@ class User extends Authenticatable
         'is_verified_driver',
     ];
 
-    public function town()
+    public function municipality()
     {
-        return $this->belongsTo(\App\Models\Town::class);
+        return $this->belongsTo(Municipality::class);
     }
 
     /**

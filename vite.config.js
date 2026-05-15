@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/views/**',
                 'Modules/**/resources/views/**',
                 'Modules/**/routes/**',
+                'Modules/**/resources/js/Pages/**',
             ],
         }),
         react(),

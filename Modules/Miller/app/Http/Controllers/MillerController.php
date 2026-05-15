@@ -110,10 +110,9 @@ class MillerController extends Controller
      */
     public function processedInventory(): Response
     {
-        $inventory = \App\Models\FinishedRiceStock::where('finished_rice_stocks.miller_id', auth()->id())
-            ->leftJoin('miller_delivery_settings', 'finished_rice_stocks.miller_id', '=', 'miller_delivery_settings.miller_id')
-            ->select('finished_rice_stocks.*', 'miller_delivery_settings.base_delivery_fee as actual_delivery_fee')
-            ->latest('finished_rice_stocks.created_at')
+        $inventory = \App\Models\FinishedRiceStock::with('deliverySetting')
+            ->where('miller_id', auth()->id())
+            ->latest()
             ->get();
 
         return Inertia::render('Miller::ProcessedInventory', [
@@ -291,11 +290,9 @@ class MillerController extends Controller
 
     public function millerOrders(): Response
     {
-        $orders = \Illuminate\Support\Facades\DB::table('orders')
-            ->join('users', 'orders.retailer_id', '=', 'users.id')
-            ->select('orders.*', 'users.first_name as retailer_first_name', 'users.last_name as retailer_last_name')
-            ->where('orders.miller_id', auth()->id())
-            ->orderByDesc('orders.created_at')
+        $orders = \App\Models\Order::with('retailer')
+            ->where('miller_id', auth()->id())
+            ->latest()
             ->get();
 
         return Inertia::render('Miller::MillerOrders', [
@@ -308,10 +305,9 @@ class MillerController extends Controller
      */
     public function readyForPickup($id)
     {
-        \Illuminate\Support\Facades\DB::table('orders')
-            ->where('id', $id)
+        \App\Models\Order::where('id', $id)
             ->where('miller_id', auth()->id())
-            ->update(['status' => 'ready_for_pickup', 'updated_at' => now()]);
+            ->update(['status' => 'ready_for_pickup']);
 
         return redirect()->back()->with('message', 'Order marked as Ready for Pickup.');
     }
@@ -418,15 +414,13 @@ class MillerController extends Controller
 
     public function shippingSettings(): Response
     {
-        $settings = \Illuminate\Support\Facades\DB::table('miller_delivery_settings')
-            ->where('miller_id', auth()->id())
-            ->first();
-
-        return Inertia::render('Miller::ShippingSettings', [
-            'settings' => $settings,
-            'municipalities' => \Illuminate\Support\Facades\DB::table('municipalities')->orderBy('distance_index')->get(),
-            'current_municipality_id' => auth()->user()->municipality_id
-        ]);
+        $settings = \App\Models\MillerDeliverySetting::where('miller_id', auth()->id())->first();
+ 
+         return Inertia::render('Miller::ShippingSettings', [
+             'settings' => $settings,
+             'municipalities' => \App\Models\Municipality::orderBy('distance_index')->get(),
+             'current_municipality_id' => auth()->user()->municipality_id
+         ]);
     }
 
     public function authorizePayment($id)
@@ -454,18 +448,16 @@ class MillerController extends Controller
             'municipality_id' => 'required|exists:municipalities,id'
         ]);
 
-        \Illuminate\Support\Facades\DB::table('miller_delivery_settings')
-            ->updateOrInsert(
-                ['miller_id' => auth()->id()],
-                [
-                    'base_delivery_fee' => $request->base_delivery_fee,
-                    'extra_fee_per_municipality' => $request->extra_fee_per_municipality,
-                    'municipality_id' => $request->municipality_id,
-                    'updated_at' => now()
-                ]
-            );
+        \App\Models\MillerDeliverySetting::updateOrCreate(
+            ['miller_id' => auth()->id()],
+            [
+                'base_delivery_fee' => $request->base_delivery_fee,
+                'extra_fee_per_municipality' => $request->extra_fee_per_municipality,
+                'municipality_id' => $request->municipality_id,
+            ]
+        );
 
-        $muniRec = \Illuminate\Support\Facades\DB::table('municipalities')->find($request->municipality_id);
+        $muniRec = \App\Models\Municipality::find($request->municipality_id);
         
         auth()->user()->update([
             'municipality_id' => $request->municipality_id,

@@ -48,7 +48,7 @@ class DriverController extends Controller
     /**
      * Driver confirms pickup and logs weight/price.
      */
-    public function logPickup(Request $request, $id)
+    public function requestPickup(Request $request, $id)
     {
         $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
 
@@ -70,7 +70,7 @@ class DriverController extends Controller
     /**
      * Phase 2.5: Driver finalizes pickup after Miller authorization.
      */
-    public function finalizePickup($id)
+    public function payFarmer($id)
     {
         $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
 
@@ -90,7 +90,7 @@ class DriverController extends Controller
     /**
      * Driver Phase 2: Confirm Loading & Start Trip for Rice Delivery
      */
-    public function startTrip(Request $request, $id)
+    public function startRiceTrip(Request $request, $id)
     {
         $order = Order::where('driver_id', auth()->id())->findOrFail($id);
 
@@ -129,7 +129,7 @@ class DriverController extends Controller
     /**
      * Driver marks rice delivery as "Arrived at Destination".
      */
-    public function arriveAtDestination(Request $request, $id)
+    public function deliverRice(Request $request, $id)
     {
         $order = Order::where('driver_id', auth()->id())->findOrFail($id);
 

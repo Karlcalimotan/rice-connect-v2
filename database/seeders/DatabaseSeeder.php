@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             \Modules\Miller\Database\Seeders\MillerDatabaseSeeder::class,
             \Modules\Retailer\Database\Seeders\RetailerDatabaseSeeder::class,
             \Modules\Driver\Database\Seeders\DriverDatabaseSeeder::class,
+            \Modules\MillerAdmin\Database\Seeders\MillerAdminDatabaseSeeder::class,
         ]);
 
         User::factory()->create([

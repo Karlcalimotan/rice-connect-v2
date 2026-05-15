@@ -16,39 +16,12 @@ class RetailerController extends Controller
      */
     public function index(): Response
     {
-        $listings = DB::table('finished_rice_stocks')
-            ->join('users', 'finished_rice_stocks.miller_id', '=', 'users.id')
-            ->leftJoin('miller_delivery_settings', 'finished_rice_stocks.miller_id', '=', 'miller_delivery_settings.miller_id')
-            ->leftJoin('municipalities', 'users.municipality_id', '=', 'municipalities.id')
-            ->select(
-                'finished_rice_stocks.rice_variety',
-                DB::raw('SUM(finished_rice_stocks.total_sacks) as total_sacks'),
-                DB::raw('MIN(finished_rice_stocks.price_per_sack) as price_per_sack'),
-                DB::raw('MIN(finished_rice_stocks.miller_id) as miller_id'),
-                'users.first_name as miller_first_name',
-                'users.last_name as miller_last_name',
-                'users.municipality as miller_location',
-                'miller_delivery_settings.base_delivery_fee',
-                'miller_delivery_settings.extra_fee_per_municipality',
-                'municipalities.distance_index as miller_municipality_index'
-            )
-            ->whereNotNull('finished_rice_stocks.price_per_sack')
-            ->where('finished_rice_stocks.total_sacks', '>', 0)
-            ->groupBy(
-                'finished_rice_stocks.rice_variety', 
-                'finished_rice_stocks.miller_id', 
-                'users.first_name', 
-                'users.last_name', 
-                'users.municipality',
-                'miller_delivery_settings.base_delivery_fee',
-                'miller_delivery_settings.extra_fee_per_municipality',
-                'municipalities.distance_index'
-            )
+        $listings = \App\Models\FinishedRiceStock::with(['miller.municipality', 'deliverySetting'])
+            ->whereNotNull('price_per_sack')
+            ->where('total_sacks', '>', 0)
             ->get();
 
-        $retailerMun = DB::table('municipalities')
-            ->where('id', auth()->user()->municipality_id)
-            ->first();
+        $retailerMun = auth()->user()->municipality()->first();
 
         return Inertia::render('Retailer::Marketplace', [
             'available_rice' => $listings,
@@ -87,13 +60,13 @@ class RetailerController extends Controller
 
         $totalPrice = ($requestedSacks * $pricePerSack) + $deliveryCharge;
 
-        DB::transaction(function () use ($request, $batch, $requestedSacks, $deliveryCharge, $totalPrice, $pricePerSack) {
+        DB::transaction(function () use ($request, $batch, $requestedSacks, $deliveryCharge, $totalPrice) {
             $decrementKg = $requestedSacks * 50;
 
             $batch->decrement('total_sacks', $requestedSacks);
             $batch->decrement('unpacked_weight_kg', $decrementKg);
 
-            DB::table('orders')->insert([
+            \App\Models\Order::create([
                 'retailer_id' => auth()->id(),
                 'miller_id' => $batch->miller_id,
                 'stock_id' => $batch->id,
@@ -106,9 +79,14 @@ class RetailerController extends Controller
                 'delivery_status' => 'Pending',
                 'delivery_type' => 'rice',
                 'status' => 'pending_preparation',
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
+
+            // Threshold Check: Notify miller if stock is low
+            if ($batch->total_sacks <= $batch->low_stock_threshold) {
+                // We can add a notification trigger here later
+                // For now, we'll log it or assume a notification system picks it up
+                \Illuminate\Support\Facades\Log::info("Low stock alert for Miller {$batch->miller_id}: {$batch->rice_variety}");
+            }
         });
 
         return redirect()->route('retailer.purchases')->with('message', 'Order placed successfully!');
@@ -116,8 +94,7 @@ class RetailerController extends Controller
 
     public function myOrders(): Response
     {
-        $orders = DB::table('orders')
-            ->where('retailer_id', auth()->id())
+        $orders = \App\Models\Order::where('retailer_id', auth()->id())
             ->latest()
             ->get();
 
@@ -128,11 +105,9 @@ class RetailerController extends Controller
 
     public function myPurchases(): Response
     {
-        $orders = DB::table('orders')
-            ->join('users', 'orders.miller_id', '=', 'users.id')
-            ->select('orders.*', 'users.first_name as miller_first_name', 'users.last_name as miller_last_name')
-            ->where('orders.retailer_id', auth()->id())
-            ->orderByDesc('orders.created_at')
+        $orders = \App\Models\Order::with('miller')
+            ->where('retailer_id', auth()->id())
+            ->latest()
             ->get();
 
         return Inertia::render('Retailer::MyPurchases', [

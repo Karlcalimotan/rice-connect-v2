@@ -9,7 +9,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/miller/marketplace', [MillerController::class, 'index'])->name('miller.marketplace');
 
     // 2. The Interest Action (POST request when clicking the button)
-    Route::patch('/miller/interest/{id}', [MillerController::class, 'interest'])->name('miller.interest');
+    Route::post('/miller/interest/{id}', [MillerController::class, 'interest'])->name('miller.interest');
 
     // 3. Incoming Palay (The list of rice the Miller is buying/waiting for)
     Route::get('/miller/incoming', [MillerController::class, 'incoming'])->name('miller.incoming');

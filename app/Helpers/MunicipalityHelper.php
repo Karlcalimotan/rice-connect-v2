@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 class MunicipalityHelper
 {
     /**
-     * Calculate delivery fee based on Miller's settings and distance between municipalities.
+     * Neighbors graph for Iloilo municipalities.
      */
     protected static $iloiloNeighbors = [
         "Passi City" => ["San Enrique", "Dueñas", "Dumarao", "Calinog", "Mina", "Bingawan"],
@@ -64,19 +64,15 @@ class MunicipalityHelper
         $retailerMuniRec = DB::table('municipalities')->find($retailerMunicipalityId);
         $end = $retailerMuniRec?->name ?: 'Iloilo City';
 
-        // BFS for shortest path (Guarantee numeric result)
         $jumps = (int) self::bfs($start, $end);
         
-        // If same town, 0 fee. If missing or disconnected, at least 1 jump.
         if ($start === $end) return 0.00;
         if ($jumps === 0) $jumps = 1;
 
-        // Fetch Miller settings for custom rates
         $settings = DB::table('miller_delivery_settings')->where('miller_id', $millerId)->first();
         $base = $settings ? (float) $settings->base_delivery_fee : 150.00;
         $extra = $settings ? (float) $settings->extra_fee_per_municipality : 50.00;
 
-        // Step-Based: Base + floor((jumps-1)/2)*Extra
         return $base + floor(($jumps - 1) / 2) * $extra;
     }
 
@@ -96,7 +92,6 @@ class MunicipalityHelper
                 return $dist;
             }
 
-            // Safety: If current muni is not in neighbors list, skip it
             if (!isset(self::$iloiloNeighbors[$current])) {
                 continue;
             }
@@ -109,6 +104,6 @@ class MunicipalityHelper
             }
         }
 
-        return 3; // Fallback
+        return 3; 
     }
 }
