@@ -84,9 +84,10 @@ class RetailerController extends Controller
 
             // Threshold Check: Notify miller if stock is low
             if ($batch->total_sacks <= $batch->low_stock_threshold) {
-                // We can add a notification trigger here later
-                // For now, we'll log it or assume a notification system picks it up
-                \Illuminate\Support\Facades\Log::info("Low stock alert for Miller {$batch->miller_id}: {$batch->rice_variety}");
+                $miller = \App\Models\User::find($batch->miller_id);
+                if ($miller) {
+                    $miller->notify(new \App\Notifications\LowStockNotification($batch->rice_variety, $batch->id, $batch->total_sacks));
+                }
             }
         });
 
@@ -99,7 +100,7 @@ class RetailerController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Retailer::MyOrders', [
+        return Inertia::render('Retailer::MyPurchases', [
             'orders' => $orders,
             'design_css_url' => '/design/rice-connect-dashboard/styles.css',
         ]);
@@ -112,7 +113,7 @@ class RetailerController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('Retailer::MyPurchases', [
+        return Inertia::render('Retailer::MyOrders', [
             'orders' => $orders,
             'design_css_url' => '/design/rice-connect-dashboard/styles.css',
         ]);
@@ -130,11 +131,62 @@ class RetailerController extends Controller
             return redirect()->back()->withErrors('Cannot confirm receipt until the order is officially Delivered.');
         }
 
-        $order->update([
-            'delivery_status' => 'Confirmed Received',
-            'status' => 'completed',
-            'updated_at' => now()
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($order) {
+            $order->update([
+                'delivery_status' => 'Confirmed Received',
+                'status' => 'completed',
+                'updated_at' => now()
+            ]);
+
+            $retailerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
+            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->miller_id]);
+
+            $retailerWallet->debit($order->total_price);
+            $millerWallet->credit($order->total_price);
+
+            \App\Models\LedgerEntry::create([
+                'user_id' => auth()->id(),
+                'amount' => $order->total_price,
+                'type' => 'debit',
+                'reference_type' => get_class($order),
+                'reference_id' => $order->id,
+                'description' => 'Payment for Rice Order #' . $order->id
+            ]);
+
+            \App\Models\LedgerEntry::create([
+                'user_id' => $order->miller_id,
+                'amount' => $order->total_price,
+                'type' => 'credit',
+                'reference_type' => get_class($order),
+                'reference_id' => $order->id,
+                'description' => 'Payment received for Rice Order #' . $order->id
+            ]);
+
+            if ($order->driver_id && $order->delivery_fee > 0) {
+                $driverWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->driver_id]);
+                
+                $millerWallet->debit($order->delivery_fee);
+                $driverWallet->credit($order->delivery_fee);
+
+                \App\Models\LedgerEntry::create([
+                    'user_id' => $order->miller_id,
+                    'amount' => $order->delivery_fee,
+                    'type' => 'debit',
+                    'reference_type' => get_class($order),
+                    'reference_id' => $order->id,
+                    'description' => 'Delivery fee payout for Order #' . $order->id
+                ]);
+
+                \App\Models\LedgerEntry::create([
+                    'user_id' => $order->driver_id,
+                    'amount' => $order->delivery_fee,
+                    'type' => 'credit',
+                    'reference_type' => get_class($order),
+                    'reference_id' => $order->id,
+                    'description' => 'Commission received for Order #' . $order->id
+                ]);
+            }
+        });
 
         return redirect()->back()->with('message', 'Delivery confirmed and signed! Order completed.');
     }

@@ -51,6 +51,14 @@ class MillerController extends Controller
             $batch->update(['status' => 'interest_received']);
         }
 
+        // 3. Notify the Farmer
+        $miller = auth()->user();
+        $batch->user->notify(new \App\Notifications\InterestReceivedNotification(
+            $miller->first_name . ' ' . $miller->last_name,
+            $batch->id,
+            $batch->rice_variety
+        ));
+
         return redirect()->back()->with('message', 'Interest sent! Awaiting farmer approval.');
     }
 
@@ -186,14 +194,40 @@ class MillerController extends Controller
 
         $totalPayment = $batch->actual_weight_kg * $validated['final_price_per_kg'];
 
-        $batch->update([
-            'final_price_per_kg' => $validated['final_price_per_kg'],
-            'price_per_kg' => $validated['final_price_per_kg'], // Sync for legacy views
-            'total_weight' => $batch->actual_weight_kg, // Sync
-            'delivery_status' => 'Completed',
-            'status' => 'received',
-            'drying_status' => 'received',
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($batch, $validated, $totalPayment) {
+            $batch->update([
+                'final_price_per_kg' => $validated['final_price_per_kg'],
+                'price_per_kg' => $validated['final_price_per_kg'], // Sync for legacy views
+                'total_weight' => $batch->actual_weight_kg, // Sync
+                'delivery_status' => 'Completed',
+                'status' => 'received',
+                'drying_status' => 'received',
+            ]);
+
+            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
+            $farmerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $batch->user_id]);
+
+            $millerWallet->debit($totalPayment);
+            $farmerWallet->credit($totalPayment);
+
+            \App\Models\LedgerEntry::create([
+                'user_id' => auth()->id(),
+                'amount' => $totalPayment,
+                'type' => 'debit',
+                'reference_type' => get_class($batch),
+                'reference_id' => $batch->id,
+                'description' => 'Payment for Harvest Batch #' . $batch->id
+            ]);
+
+            \App\Models\LedgerEntry::create([
+                'user_id' => $batch->user_id,
+                'amount' => $totalPayment,
+                'type' => 'credit',
+                'reference_type' => get_class($batch),
+                'reference_id' => $batch->id,
+                'description' => 'Payment received for Harvest Batch #' . $batch->id
+            ]);
+        });
 
         return redirect()->back()->with('message', 'Transaction finalized! Total Payment: ₱' . number_format($totalPayment, 2));
     }

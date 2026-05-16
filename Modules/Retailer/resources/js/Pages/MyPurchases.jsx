@@ -37,7 +37,7 @@ export default function MyPurchases({ auth, orders, design_css_url }) {
     return (
         <AuthenticatedLayout user={auth?.user}>
             <Head>
-                <title>My Purchases</title>
+                <title>My Orders</title>
                 {design_css_url && <link rel="stylesheet" href={design_css_url} />}
             </Head>
             <div className="p-6 bg-transparent min-h-screen">
@@ -45,7 +45,7 @@ export default function MyPurchases({ auth, orders, design_css_url }) {
                     <div className="flex items-center gap-3 mb-10">
                         <div className="w-1.5 h-8 bg-emerald-600 rounded-full shadow-[0_0_15px_rgba(5,150,105,0.4)]"></div>
                         <h2 className="text-5xl font-black uppercase tracking-tighter text-emerald-950 leading-none">
-                            My Purchases
+                            My Orders
                         </h2>
                     </div>
 

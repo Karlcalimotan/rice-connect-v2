@@ -95,8 +95,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                         </li>
                                         <li>
                                             <NavLink href={route('farmer.offers')} active={route().current('farmer.offers')} onClick={handleNavClick} className="w-full">
-                                                <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-[#c3a153]/20 bg-white/5 text-[#d8bd73]"><Icons.Market /></span>
-                                                <span>Offers Handshake</span>
+                                                <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-[#c3a153]/20 bg-white/5 text-[#d8bd73]"><Icons.Orders /></span>
+                                                <span>Handshake Offers</span>
                                             </NavLink>
                                         </li>
                                     </>

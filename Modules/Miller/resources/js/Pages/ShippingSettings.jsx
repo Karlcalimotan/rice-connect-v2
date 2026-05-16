@@ -24,7 +24,7 @@ export default function ShippingSettings({ auth, settings, municipalities, curre
         >
             <Head title="Miller Logistics Settings" />
 
-            <div className="p-6 bg-gray-50 min-h-screen font-['Plus_Jakarta_Sans',sans-serif]">
+            <div className="p-6 bg-gray-50 pb-20 font-['Plus_Jakarta_Sans',sans-serif]">
                 <div className="max-w-3xl mx-auto">
                     <div className="flex items-center gap-2 mb-8">
                         <div className="w-2 h-8 bg-emerald-600 rounded-full"></div>
@@ -87,7 +87,7 @@ export default function ShippingSettings({ auth, settings, municipalities, curre
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full bg-[#064e3b] text-white py-6 px-4 text-xl font-black uppercase tracking-widest hover:bg-[#053a2c] transition-all active:scale-95 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 mt-10 block border-4 border-black"
+                                className="w-full bg-[#103227] text-[#f6ecd1] py-6 px-4 text-xl font-black uppercase tracking-widest hover:bg-[#164335] transition-all active:scale-95 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 mt-12 block border-4 border-black relative z-10"
                             >
                                 {processing ? 'Saving...' : 'Update Logistics Engine'}
                             </button>

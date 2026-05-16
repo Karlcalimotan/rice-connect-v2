@@ -24,6 +24,8 @@ class DatabaseSeeder extends Seeder
             \Modules\Driver\Database\Seeders\DriverDatabaseSeeder::class,
             \Modules\MillerAdmin\Database\Seeders\MillerAdminDatabaseSeeder::class,
             AnalyticsSeeder::class,
+            FinancialLedgerSeeder::class,
+            MarketplaceSeeder::class,
         ]);
 
         // Avoid duplicate username/email on repeated `php artisan migrate --seed`.

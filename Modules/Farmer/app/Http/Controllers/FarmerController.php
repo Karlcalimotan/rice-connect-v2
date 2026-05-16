@@ -110,10 +110,9 @@ class FarmerController extends Controller
 }
     public function offers()
 {
-    // Get batches that have a Miller interested (buyer_id is not null)
-    $offers = HarvestBatch::with('buyer') // 'buyer' is the User who is the Miller
+    $offers = HarvestBatch::with('interests.miller')
         ->where('user_id', auth()->id())
-        ->where('status', 'Interest Pending')
+        ->where('status', 'interest_received')
         ->get();
 
     return Inertia::render('Farmer::Offers', [
