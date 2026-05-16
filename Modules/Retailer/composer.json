@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/retailer",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Retailer\\": "app/",
+            "Modules\\Retailer\\Database\\Factories\\": "database/factories/",
+            "Modules\\Retailer\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Retailer\\Tests\\": "tests/"
+        }
+    }
+}

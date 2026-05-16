@@ -15,11 +15,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            MunicipalitySeeder::class,
+            SupplyChainSeeder::class,
+            \Modules\Farmer\Database\Seeders\FarmerDatabaseSeeder::class,
+            \Modules\Miller\Database\Seeders\MillerDatabaseSeeder::class,
+            \Modules\Retailer\Database\Seeders\RetailerDatabaseSeeder::class,
+            \Modules\Driver\Database\Seeders\DriverDatabaseSeeder::class,
+            \Modules\MillerAdmin\Database\Seeders\MillerAdminDatabaseSeeder::class,
+            AnalyticsSeeder::class,
+            FinancialLedgerSeeder::class,
+            MarketplaceSeeder::class,
         ]);
+
+        // Avoid duplicate username/email on repeated `php artisan migrate --seed`.
+        User::updateOrCreate(
+            ['username' => 'Marycamille1616'],
+            [
+                'first_name' => 'Mary',
+                'last_name' => 'Camille',
+                'email' => 'camillemary213@gmail.com',
+                'contact' => '09123456789',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            ]
+        );
     }
 }

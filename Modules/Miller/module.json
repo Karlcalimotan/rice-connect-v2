@@ -1,0 +1,11 @@
+{
+    "name": "Miller",
+    "alias": "miller",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Miller\\Providers\\MillerServiceProvider"
+    ],
+    "files": []
+}

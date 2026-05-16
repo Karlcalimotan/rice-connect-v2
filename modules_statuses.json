@@ -1,3 +1,7 @@
 {
-    "Farmer": true
+    "Farmer": true,
+    "Miller": true,
+    "Retailer": true,
+    "Driver": true,
+    "MillerAdmin": true
 }

@@ -20,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        ini_set('max_execution_time', 300);
         Vite::prefetch(concurrency: 3);
     }
 }

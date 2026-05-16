@@ -21,6 +21,7 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'design_css_url' => '/design/rice-connect-dashboard/styles.css',
         ]);
     }
 
@@ -29,15 +30,36 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // 1. Split the full name into First and Last if provided as 'name'
+        if ($request->has('name')) {
+            $nameParts = explode(' ', $request->name, 2);
+            $user->first_name = $nameParts[0] ?? '';
+            $user->last_name = $nameParts[1] ?? '';
         }
 
-        $request->user()->save();
+        // 2. Fill other fields and SYNC Municipality ID
+        $user->fill($request->safe()->except(['name']));
 
-        return Redirect::route('profile.edit');
+        if ($request->has('municipality')) {
+            $muniRec = \Illuminate\Support\Facades\DB::table('municipalities')
+                ->where('name', $request->municipality)
+                ->first();
+            if ($muniRec) {
+                $user->municipality_id = $muniRec->id;
+            }
+        }
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        // 3. Save to database
+        $user->save();
+
+        // 4. Redirect to Dashboard as requested
+        return Redirect::route('dashboard')->with('status', 'profile-updated');
     }
 
     /**
