@@ -1,0 +1,125 @@
+@import url('https://fonts.bunny.net/css?family=libre-baskerville:400,700&family=playfair-display:500,600,700&display=swap');
+
+:root {
+  /* fallback values in case rc-theme isn't applied */
+  --rc-theme-ready: 1;
+}
+
+/* Namespaced Rice Connect theme. Apply by adding .rc-theme to a page wrapper */
+.rc-theme {
+  --forest:#0c2a22;
+  --forest-deep:#071913;
+  --forest-soft:#12382e;
+  --parchment:#74ac4e;
+  --parchment-soft:#6f9c44;
+  --gold:#50a054;
+  --gold-soft:rgba(73, 156, 87, 0.18);
+  --gold-line:rgba(43, 92, 36, 0.3);
+  --text:#1d1a16;
+  color:var(--text);
+  font-family:'Libre Baskerville', serif;
+}
+
+.rc-theme::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image: 
+    linear-gradient(rgba(104, 192, 101, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(111, 168, 100, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 20% 20%, rgba(158, 218, 181, 0.09), transparent 22%),
+    radial-gradient(circle at 80% 0%, rgba(38, 97, 38, 0.08), transparent 28%);
+  background-size:42px 42px, 42px 42px, auto, auto;
+  opacity:0.35;
+  mix-blend-mode:multiply;
+}
+
+.rc-theme .rc-serif-heading,
+.rc-theme .rc-brand h1,
+.rc-theme .rc-brand h2,
+.rc-theme .rc-section-title {
+  font-family:'Playfair Display', serif;
+}
+
+.rc-theme .rc-sidebar-shell {
+  background:linear-gradient(180deg, rgba(8,24,19,0.98), rgba(10,35,28,0.98));
+  color:var(--parchment);
+  border-right:1px solid rgba(195,161,83,0.22);
+}
+
+.rc-theme .rc-sidebar-panel {
+  background:linear-gradient(135deg, rgba(20,71,53,0.96), rgba(8,31,25,0.92));
+  border:1px solid rgba(195,161,83,0.18);
+  box-shadow:0 24px 60px rgba(0,0,0,0.24);
+}
+
+.rc-theme .rc-card,
+.rc-theme .rc-panel,
+.rc-theme .rc-stat,
+.rc-theme .rc-archive-item,
+.rc-theme .rc-surface {
+  background:linear-gradient(180deg, rgba(227, 245, 225, 0.96), rgba(36, 92, 39, 0.94));
+  border:1px solid rgba(70, 156, 70, 0.2);
+  box-shadow:0 16px 40px rgba(37, 95, 40, 0.1);
+  color:var(--text);
+}
+
+.rc-theme .rc-card {
+  position:relative;
+  overflow:hidden;
+}
+
+.rc-theme .rc-card::after,
+.rc-theme .rc-panel::after,
+.rc-theme .rc-stat::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg, rgba(144, 190, 143, 0.1), transparent 34%);
+  pointer-events:none;
+}
+
+.rc-theme .rc-nav-link {
+  border:1px solid transparent;
+  transition:all 180ms ease;
+}
+
+.rc-theme .rc-nav-link-active {
+  background:rgba(63, 119, 26, 0.08);
+  border-color:rgba(61, 136, 61, 0.28);
+  box-shadow:0 12px 28px rgba(94, 172, 64, 0.2);
+}
+
+.rc-theme .rc-chip {
+  background:rgba(84, 211, 52, 0.12);
+  border:1px solid #7cdd69;
+  color:#7cdd69;
+}
+
+.rc-theme .rc-muted {
+  color:rgba(88, 177, 48, 0.72);
+}
+
+.rc-theme .rc-chart-frame {
+  background:linear-gradient(180deg, rgba(129, 189, 74, 0.92), rgba(31, 100, 47, 0.88));
+  border:1px solid rgba(195,161,83,0.22);
+  box-shadow:0 18px 46px rgba(35,24,16,0.12);
+}
+
+.rc-theme .rc-texture {
+  background-image:radial-gradient(circle at 12px 12px, rgba(195,161,83,0.08) 1px, transparent 1.5px), linear-gradient(180deg, rgba(34, 121, 34, 0.05), transparent);
+  background-size:24px 24px, 100% 100%;
+}
+
+/* Harvest page scenic background (place image at /public/design/harvest-bg.jpg) */
+.rc-theme .rc-harvest-bg {
+  background-image: linear-gradient(rgba(153, 228, 143, 0.48), rgba(30, 82, 33, 0.28)), url('/design/harvest-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+@media (max-width:900px){
+  .rc-theme .rc-grid{grid-template-columns:1fr!important}
+}

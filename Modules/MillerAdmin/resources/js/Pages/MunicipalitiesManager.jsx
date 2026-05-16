@@ -108,36 +108,43 @@ export default function MunicipalitiesManager({ auth, municipalities }) {
 
                     {/* Table Section */}
                     <div className="glass-card shadow-2xl p-2 overflow-hidden">
-                        <table className="w-full text-left border-separate border-spacing-y-2">
-                            <thead>
-                                <tr className="bg-emerald-950/90 text-white overflow-hidden rounded-[2rem]">
-                                    <th className="p-6 uppercase font-black tracking-widest text-[9px] rounded-l-2xl">Index</th>
-                                    <th className="p-6 uppercase font-black tracking-widest text-[9px]">Municipality</th>
-                                    <th className="p-6 uppercase font-black tracking-widest text-[9px] text-right rounded-r-2xl">Actions</th>
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <caption className="sr-only">List of registered municipalities</caption>
+                            <thead className="bg-emerald-950/90 text-white">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-black uppercase tracking-widest">Index</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-black uppercase tracking-widest">Municipality</th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-black uppercase tracking-widest">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/10">
+                            <tbody className="bg-white divide-y divide-gray-200">
                                 {municipalities.map(m => (
-                                    <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="p-6 font-black text-3xl tracking-tighter italic text-rose-600 drop-shadow-sm opacity-60">#{m.distance_index}</td>
-                                        <td className="p-4 font-extrabold uppercase text-emerald-950 text-sm">{m.name}</td>
-                                        <td className="p-4 text-right flex justify-end gap-3">
-                                            <button 
-                                                onClick={() => startEdit(m)}
-                                                className="w-10 h-10 flex items-center justify-center bg-white/60 text-emerald-950 border border-white/80 rounded-xl shadow-lg hover:bg-white transition-all duration-300"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" strokeWidth="2.5"/></svg>
-                                            </button>
-                                            <button 
-                                                onClick={() => {
-                                                    if(confirm('Delete this municipality? This will fail if users are assigned to it.')) {
-                                                        destroy(route('milleradmin.municipalities.destroy', m.id));
-                                                    }
-                                                }}
-                                                className="w-10 h-10 flex items-center justify-center bg-rose-50 text-rose-700 border border-rose-200 rounded-xl shadow-sm hover:bg-rose-100 transition-all duration-300"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2.5"/></svg>
-                                            </button>
+                                    <tr key={m.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 align-middle font-black text-2xl tracking-tighter text-rose-600">#{m.distance_index}</td>
+                                        <td className="px-6 py-4 align-middle font-extrabold uppercase text-emerald-950 text-sm">{m.name}</td>
+                                        <td className="px-6 py-4 align-middle text-right">
+                                            <div className="inline-flex items-center gap-2">
+                                                <button 
+                                                    onClick={() => startEdit(m)}
+                                                    aria-label={`Edit ${m.name}`}
+                                                    title={`Edit ${m.name}`}
+                                                    className="w-10 h-10 inline-flex items-center justify-center bg-white/60 text-emerald-950 border border-white/80 rounded-xl shadow-sm hover:bg-white transition-all duration-300"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" strokeWidth="2.5"/></svg>
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        if(confirm('Delete this municipality? This will fail if users are assigned to it.')) {
+                                                            destroy(route('milleradmin.municipalities.destroy', m.id));
+                                                        }
+                                                    }}
+                                                    aria-label={`Delete ${m.name}`}
+                                                    title={`Delete ${m.name}`}
+                                                    className="w-10 h-10 inline-flex items-center justify-center bg-rose-50 text-rose-700 border border-rose-200 rounded-xl shadow-sm hover:bg-rose-100 transition-all duration-300"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2.5"/></svg>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

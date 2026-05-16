@@ -90,20 +90,21 @@ export default function RetailerAnalyticsDashboard() {
                 <div className="bg-white rounded-lg shadow p-6 mb-6">
                     <h2 className="text-lg font-semibold text-slate-900 mb-4">Consumer Demand Heatmap</h2>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                            <caption className="sr-only">Consumer demand heatmap by day and time</caption>
                             <thead>
                                 <tr className="bg-slate-50">
-                                    <th className="px-4 py-2 text-left font-semibold text-slate-900">Day / Time</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Morning</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Afternoon</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Evening</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Night</th>
+                                    <th scope="col" className="px-4 py-2 text-left font-semibold text-slate-900">Day / Time</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Morning</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Afternoon</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Evening</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Night</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="bg-white divide-y divide-gray-200">
                                 {daysOrder.map((day) => (
                                     <tr key={day} className="border-t">
-                                        <td className="px-4 py-2 font-semibold text-slate-900">{day}</td>
+                                        <th scope="row" className="px-4 py-2 font-semibold text-slate-900 text-left">{day}</th>
                                         {['morning', 'afternoon', 'evening', 'night'].map((slot) => {
                                             const slotData = heatmapData[day]?.find(s => s.time_slot === slot);
                                             const intensity = slotData?.intensity || 'low';
@@ -114,7 +115,7 @@ export default function RetailerAnalyticsDashboard() {
                                             };
                                             return (
                                                 <td key={slot} className="px-4 py-2 text-center">
-                                                    <div className={`${intensityColor[intensity]} text-white rounded py-1 px-2 inline-block text-xs font-semibold`}>
+                                                    <div className={`${intensityColor[intensity]} text-white rounded py-1 px-2 inline-block text-xs font-semibold`} aria-label={`${day} ${slot} demand`}>
                                                         {slotData?.demand || 0}
                                                     </div>
                                                 </td>

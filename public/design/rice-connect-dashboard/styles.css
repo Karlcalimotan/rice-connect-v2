@@ -1,0 +1,29 @@
+:root {
+  /* fallback values */
+}
+
+/* Namespaced Rice Connect theme for public distribution */
+.rc-theme{
+  --forest:#0f3b2f;
+  --parchment:#f4ecd6;
+  --muted-gold:#b48b3b;
+  --text:#1b1a17;
+  font-family: 'Libre Baskerville', serif;
+}
+
+.rc-theme .rc-sidebar{background:var(--forest);padding:1.5rem;border-radius:8px;color:var(--parchment)}
+.rc-theme .rc-brand h1{font-family:'Playfair Display',serif;margin:0;color:var(--parchment);font-size:22px}
+.rc-theme .rc-subtitle{color:rgba(255,245,220,0.85);font-size:12px}
+
+.rc-theme .rc-card{background:linear-gradient(180deg, rgba(244,236,214,0.95), rgba(244,236,214,0.92));padding:1rem;border-radius:8px;border:1px solid rgba(180,139,59,0.18);box-shadow:0 6px 18px rgba(0,0,0,0.12);color:var(--text)}
+.rc-theme .rc-card h3{font-family:'Playfair Display',serif;color:var(--text)}
+
+.rc-theme .rc-area-chart{width:100%;height:200px;border-radius:6px;overflow:hidden;background-image:linear-gradient(90deg, rgba(0,0,0,0.01), rgba(0,0,0,0.01))}
+
+.rc-theme .rc-profile{background:var(--parchment);color:var(--text);padding:8px 10px;border-radius:8px;font-weight:700}
+
+.rc-theme .rc-mini-card{display:flex;gap:12px;align-items:center;padding:12px;border-radius:6px;background:linear-gradient(180deg, rgba(255,255,250,0.6), rgba(255,255,245,0.45));border:1px solid rgba(27,26,23,0.04)}
+
+.rc-theme .rc-parchment-bg{background:var(--parchment);padding:12px;border-radius:6px}
+
+@media (max-width:900px){.rc-theme .rc-grid{grid-template-columns:1fr!important}}

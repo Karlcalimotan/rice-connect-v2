@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import DeliveryStatusStepper from '@/Components/DeliveryStatusStepper';
 import React, { useEffect } from 'react';
 
-export default function MyPurchases({ auth, orders }) {
+export default function MyPurchases({ auth, orders, design_css_url }) {
 
     const badgeConfig = (status, delivery_status) => {
         if (delivery_status === 'Confirmed Received') return { bg: 'bg-green-600 text-white', label: '✅ Order Completed' };
@@ -36,7 +36,10 @@ export default function MyPurchases({ auth, orders }) {
 
     return (
         <AuthenticatedLayout user={auth?.user}>
-            <Head title="My Purchases" />
+            <Head>
+                <title>My Purchases</title>
+                {design_css_url && <link rel="stylesheet" href={design_css_url} />}
+            </Head>
             <div className="p-6 bg-transparent min-h-screen">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center gap-3 mb-10">

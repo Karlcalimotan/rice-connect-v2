@@ -175,20 +175,21 @@ export default function AdminAnalyticsDashboard() {
                 <div className="bg-white rounded-lg shadow p-6">
                     <h2 className="text-lg font-semibold text-slate-900 mb-4">Regional Distribution Bottlenecks</h2>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                            <caption className="sr-only">Regional distribution bottlenecks</caption>
                             <thead>
                                 <tr className="bg-slate-50">
-                                    <th className="px-4 py-2 text-left font-semibold text-slate-900">Region</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Avg Delay (hrs)</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Delay Rate</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Shipments</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Volume</th>
-                                    <th className="px-4 py-2 text-center font-semibold text-slate-900">Severity</th>
+                                    <th scope="col" className="px-4 py-2 text-left font-semibold text-slate-900">Region</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Avg Delay (hrs)</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Delay Rate</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Shipments</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Volume</th>
+                                    <th scope="col" className="px-4 py-2 text-center font-semibold text-slate-900">Severity</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="bg-white divide-y divide-gray-200">
                                 {bottlenecks.map((bottleneck) => (
-                                    <tr key={bottleneck.region} className="border-t hover:bg-slate-50">
+                                    <tr key={bottleneck.region} className="hover:bg-slate-50">
                                         <td className="px-4 py-2 font-semibold text-slate-900">{bottleneck.region}</td>
                                         <td className="px-4 py-2 text-center">{bottleneck.avg_delay_hours.toFixed(1)}</td>
                                         <td className="px-4 py-2 text-center">{bottleneck.delay_rate_percentage.toFixed(1)}%</td>

@@ -2,10 +2,13 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import React from 'react';
 
-export default function MyOrders({ auth, orders }) {
+export default function MyOrders({ auth, orders, design_css_url }) {
     return (
         <AuthenticatedLayout user={auth?.user}>
-            <Head title="My Orders" />
+            <Head>
+                <title>My Orders</title>
+                {design_css_url && <link rel="stylesheet" href={design_css_url} />}
+            </Head>
             <div className="p-6 bg-gray-50 min-h-screen">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center gap-2 mb-8">

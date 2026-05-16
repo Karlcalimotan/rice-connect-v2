@@ -9,13 +9,8 @@ export default function NavLink({
     return (
         <Link
             {...props}
-            className={
-                'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none ' +
-                (active
-                    ? 'border-indigo-400 text-gray-900 focus:border-indigo-700'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 focus:border-gray-300 focus:text-gray-700') +
-                className
-            }
+            className={`inline-flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium leading-5 transition duration-200 ease-out focus:outline-none ${active ? 'rc-nav-link-active text-[#f8eed0]' : 'rc-nav-link text-[#d9ccb1] hover:text-[#fff7e5]'} ${className}`}
+            aria-current={active ? 'page' : undefined}
         >
             {children}
         </Link>

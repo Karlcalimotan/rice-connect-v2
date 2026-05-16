@@ -28,12 +28,13 @@ export default function Register() {
         <GuestLayout>
             <Head title="Register" />
 
-            <div className="mb-6 text-center">
-                <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-                <p className="text-sm text-gray-600 mt-1">Join the Rice Connect network today</p>
-            </div>
+            <div className="rc-card rc-parchment-bg p-6">
+                <div className="mb-6 text-center">
+                    <h2 className="rc-serif-heading text-2xl font-semibold text-forest-soft">Create Account</h2>
+                    <p className="text-sm text-gray-700 mt-1">Join the Rice Connect network today</p>
+                </div>
 
-            <form onSubmit={submit} className="space-y-4">
+                <form onSubmit={submit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <InputLabel htmlFor="first_name" value="First Name" />
@@ -143,19 +144,15 @@ export default function Register() {
                     </div>
                 </div>
 
-                <div className="mt-6 flex items-center justify-between">
-                    <Link
-                        href={route('login')}
-                        className="text-sm text-gray-600 underline hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Already registered?
-                    </Link>
+                    <div className="mt-6 flex items-center justify-between">
+                        <Link href={route('login')} className="text-sm text-gray-700 underline">Already registered?</Link>
 
-                    <PrimaryButton className="px-8" disabled={processing}>
-                        Create Account
-                    </PrimaryButton>
-                </div>
-            </form>
+                        <PrimaryButton className="px-8 bg-emerald-700 hover:bg-emerald-800" disabled={processing}>
+                            Create Account
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </div>
         </GuestLayout>
     );
 }

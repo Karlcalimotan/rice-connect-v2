@@ -98,7 +98,7 @@ function calculateDistance(startMuni, endMuni) {
     return 1;
 }
 
-export default function Marketplace({ auth, available_rice, retailer_municipality }) {
+export default function Marketplace({ auth, available_rice, retailer_municipality, design_css_url }) {
     const [orderQuantities, setOrderQuantities] = useState({});
     const [shippingMethods, setShippingMethods] = useState({});
 
@@ -118,7 +118,10 @@ export default function Marketplace({ auth, available_rice, retailer_municipalit
 
     return (
         <AuthenticatedLayout user={auth?.user}>
-            <Head title="Retailer Marketplace" />
+            <Head>
+                <title>Retailer Marketplace</title>
+                {design_css_url && <link rel="stylesheet" href={design_css_url} />}
+            </Head>
             <div className="bg-transparent">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex flex-col items-center justify-center mb-20 text-center pt-8">
