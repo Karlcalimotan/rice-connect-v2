@@ -269,6 +269,11 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 <main className="flex-1 overflow-y-auto no-scrollbar bg-[radial-gradient(circle_at_top,rgba(18,56,46,0.06),transparent_42%),linear-gradient(180deg,rgba(247,240,223,0.88),rgba(236,224,192,0.98))] px-6 py-8 lg:px-12 lg:py-10">
                     <div className="mx-auto max-w-7xl pb-10">
+                        {header && (
+                            <div className="mb-6 lg:hidden">
+                                {header}
+                            </div>
+                        )}
                         {children}
                     </div>
                 </main>

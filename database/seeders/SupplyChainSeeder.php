@@ -16,13 +16,13 @@ class SupplyChainSeeder extends Seeder
     public function run(): void
     {
         // Create users
-        $admin = User::updateOrCreate(['email' => 'admin@rice.com'], [
+        $admin = User::updateOrCreate(['email' => 'admin@123'], [
             'first_name' => 'System',
             'last_name' => 'Admin',
             'username' => 'admin',
             'role' => 'admin',
             'contact' => '09000000000',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('admin123'),
         ]);
 
         $farmer = User::updateOrCreate(['email' => 'farmer@example.test'], [

@@ -32,7 +32,7 @@ class AuthController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
@@ -53,7 +53,7 @@ class AuthController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'contact' => ['nullable', 'string', 'max:20'],
-            'role' => ['required', 'string', 'in:admin,farmer,miller,retailer,driver'],
+            'role' => ['required', 'string', 'in:farmer,miller,retailer,driver'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);

@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\MillerAdmin\Http\Controllers\MillerAdminController;
 
-Route::middleware(['web', 'auth', 'verified'])->group(function () {
+Route::middleware(['web', 'auth', 'verified', 'role:admin'])->group(function () {
     // Global Dashboard (Admin View)
     Route::get('/admin/dashboard', [MillerAdminController::class, 'index'])->name('admin.dashboard');
     

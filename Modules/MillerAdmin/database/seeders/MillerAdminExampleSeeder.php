@@ -17,14 +17,14 @@ class MillerAdminExampleSeeder extends Seeder
     {
         // 1. Create a dedicated Miller Admin user
         $admin = User::updateOrCreate(
-            ['email' => 'milleradmin@rice.com'],
+            ['email' => 'admin@123'],
             [
-                'first_name' => 'Miller',
-                'last_name' => 'Administrator',
-                'username' => 'miller_admin',
-                'contact' => '0987654321',
+                'first_name' => 'System',
+                'last_name' => 'Admin',
+                'username' => 'admin',
+                'contact' => '09000000000',
                 'role' => 'admin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('admin123'),
                 'email_verified_at' => now(),
             ]
         );

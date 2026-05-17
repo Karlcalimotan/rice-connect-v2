@@ -143,7 +143,7 @@ export default function Marketplace({ auth, available_rice, retailer_municipalit
                                 const totalWeight = selectedSacks * SACK_WEIGHT;
                                 const pricePerSack = Number(item.price_per_sack) || 0;
 
-                                const millerMuni = item.miller?.municipality || "Iloilo City";
+                                const millerMuni = item.miller?.municipality?.name || item.miller?.municipality || "Iloilo City";
                                 const retailerMuni = retailer_municipality || "Iloilo City";
 
                                 const jumps = calculateDistance(millerMuni, retailerMuni);
@@ -240,7 +240,7 @@ export default function Marketplace({ auth, available_rice, retailer_municipalit
                                                 disabled={selectedSacks === 0 || selectedSacks > maxSacks}
                                                 className={`btn-2026 w-full !rounded-[1.5rem] py-6 ${selectedSacks === 0 || selectedSacks > maxSacks ? 'opacity-30 grayscale cursor-not-allowed' : ''}`}
                                                 onClick={() => {
-                                                    router.post(route('retailer.order'), {
+                                                    router.post(route('retailer.place_order'), {
                                                         rice_variety: variety,
                                                         sacks: selectedSacks,
                                                         shipping_method: currentMethod,

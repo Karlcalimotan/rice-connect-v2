@@ -34,8 +34,8 @@ class DriverController extends Controller
 
         // 3. History
         $history = [
-            'palay' => HarvestBatch::where('driver_id', $driverId)->whereIn('delivery_status', ['Received', 'Completed'])->limit(5)->get(),
-            'rice' => Order::where('driver_id', $driverId)->where('delivery_status', 'Completed')->limit(5)->get(),
+            'palay' => HarvestBatch::where('driver_id', $driverId)->whereIn('delivery_status', ['Received', 'Completed'])->latest()->limit(10)->get(),
+            'rice' => Order::where('driver_id', $driverId)->whereIn('delivery_status', ['Confirmed Received', 'Completed'])->latest()->limit(10)->get(),
         ];
 
         return Inertia::render('Driver::Dashboard', [
@@ -138,6 +138,78 @@ class DriverController extends Controller
             'status' => 'delivered', 
         ]);
 
-        return redirect()->back()->with('message', 'Order marked as Delivered. Waiting for Retailer confirmation.');
+        return redirect()->back()->with('message', 'Order marked as Delivered. Please have the Retailer sign off or use the final sign-off button.');
+    }
+
+    /**
+     * Driver performs the final sign-off for a rice delivery.
+     */
+    public function finalSignOff(Request $request, $id)
+    {
+        $order = Order::where('driver_id', auth()->id())->findOrFail($id);
+
+        if ($order->delivery_status !== 'Delivered') {
+            return redirect()->back()->withErrors('Order must be marked as Delivered before final sign-off.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($order) {
+            $order->update([
+                'delivery_status' => 'Confirmed Received',
+                'status' => 'completed',
+                'updated_at' => now()
+            ]);
+
+            // Copy wallet logic from RetailerController to ensure funds move if driver signs off
+            $retailerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->retailer_id]);
+            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->miller_id]);
+
+            $retailerWallet->debit($order->total_price);
+            $millerWallet->credit($order->total_price);
+
+            \App\Models\LedgerEntry::create([
+                'user_id' => $order->retailer_id,
+                'amount' => $order->total_price,
+                'type' => 'debit',
+                'reference_type' => get_class($order),
+                'reference_id' => $order->id,
+                'description' => 'Payment for Rice Order #' . $order->id . ' (Signed off by Driver)'
+            ]);
+
+            \App\Models\LedgerEntry::create([
+                'user_id' => $order->miller_id,
+                'amount' => $order->total_price,
+                'type' => 'credit',
+                'reference_type' => get_class($order),
+                'reference_id' => $order->id,
+                'description' => 'Payment received for Rice Order #' . $order->id . ' (Signed off by Driver)'
+            ]);
+
+            // Driver commission
+            if ($order->delivery_fee > 0) {
+                $driverWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
+                $millerWallet->debit($order->delivery_fee);
+                $driverWallet->credit($order->delivery_fee);
+
+                \App\Models\LedgerEntry::create([
+                    'user_id' => $order->miller_id,
+                    'amount' => $order->delivery_fee,
+                    'type' => 'debit',
+                    'reference_type' => get_class($order),
+                    'reference_id' => $order->id,
+                    'description' => 'Delivery fee payout for Order #' . $order->id
+                ]);
+
+                \App\Models\LedgerEntry::create([
+                    'user_id' => auth()->id(),
+                    'amount' => $order->delivery_fee,
+                    'type' => 'credit',
+                    'reference_type' => get_class($order),
+                    'reference_id' => $order->id,
+                    'description' => 'Commission received for Order #' . $order->id
+                ]);
+            }
+        });
+
+        return redirect()->back()->with('message', 'Final sign-off complete! Delivery finalized.');
     }
 }

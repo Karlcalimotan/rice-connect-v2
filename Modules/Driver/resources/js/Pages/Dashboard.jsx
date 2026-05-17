@@ -10,6 +10,7 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
     });
 
     const [selectedBatch, setSelectedBatch] = React.useState(null);
+    const [selectedOrder, setSelectedOrder] = React.useState(null);
 
     const handleLogPickup = (id) => {
         postPickup(route('driver.palay.request_pickup', id));
@@ -194,6 +195,15 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
                                                 Mark as Delivered
                                             </button>
                                         )}
+
+                                        {order.delivery_status === 'Delivered' && (
+                                            <button 
+                                                onClick={() => setSelectedOrder(order)}
+                                                className="btn-2026 w-full text-center !bg-emerald-600 hover:!bg-emerald-700 !py-4 mt-6"
+                                            >
+                                                Final Sign-off
+                                            </button>
+                                        )}
                                     </div>
                                 ))
                             )}
@@ -202,8 +212,39 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
 
                     <div className="mt-20">
                         <h3 className="text-[10px] font-black uppercase mb-8 tracking-[0.3em] text-emerald-600">Assignment History</h3>
-                        <div className="glass-card overflow-hidden shadow-2xl p-6 bg-white/50 backdrop-blur-md">
-                             <p className="text-xs font-bold text-gray-400 uppercase text-center py-10">Operations Log Integrated</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-black uppercase text-gray-400">Past Palay Shipments</h4>
+                                {history.palay.length === 0 ? (
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase italic">No history yet.</p>
+                                ) : (
+                                    history.palay.map(item => (
+                                        <div key={item.id} className="bg-white/50 border-2 border-black p-4 flex justify-between items-center">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase">{item.rice_variety}</p>
+                                                <p className="text-[8px] font-bold text-gray-400">{new Date(item.updated_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Completed</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-black uppercase text-gray-400">Past Rice Deliveries</h4>
+                                {history.rice.length === 0 ? (
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase italic">No history yet.</p>
+                                ) : (
+                                    history.rice.map(item => (
+                                        <div key={item.id} className="bg-white/50 border-2 border-black p-4 flex justify-between items-center">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase">{item.rice_variety}</p>
+                                                <p className="text-[8px] font-bold text-gray-400">{new Date(item.updated_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Delivered</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -226,6 +267,40 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
                                     className="btn-2026 !bg-black !text-white border-4 border-black"
                                 >
                                     Confirm
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {selectedOrder && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+                        <div className="bg-white border-8 border-black w-full max-w-xl p-8">
+                            <h3 className="text-3xl font-black uppercase mb-2">Final Sign-off</h3>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-6">Retailer Handover Confirmation</p>
+                            
+                            <div className="bg-emerald-600 text-white p-6 border-4 border-black mb-8">
+                                <p className="text-[10px] font-black uppercase mb-1">Order Value:</p>
+                                <p className="text-4xl font-black">₱{Number(selectedOrder.total_price).toLocaleString()}</p>
+                                <p className="text-[9px] font-bold uppercase mt-2 opacity-80">{selectedOrder.rice_variety} • {selectedOrder.sacks} Sacks</p>
+                            </div>
+
+                            <div className="p-4 bg-yellow-50 border-4 border-black mb-8 text-center">
+                                <p className="text-[10px] font-black uppercase text-yellow-800">
+                                    ⚠️ Action Required: Please ensure the retailer has verified the items before signing off.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <button onClick={() => setSelectedOrder(null)} className="btn-2026 !bg-white !text-black border-4 border-black">Cancel</button>
+                                <button 
+                                    onClick={() => {
+                                        router.post(route('driver.order.final_sign_off', selectedOrder.id));
+                                        setSelectedOrder(null);
+                                    }}
+                                    className="btn-2026 !bg-black !text-white border-4 border-black"
+                                >
+                                    Authorize Sign-off
                                 </button>
                             </div>
                         </div>
