@@ -32,7 +32,7 @@ export default function AuthenticatedLayout({ header, children }) {
     };
 
     const handleNavClick = () => {
-        if (window.innerWidth < 1024) {
+        if (window.innerWidth < 1536) {
             setIsSidebarOpen(false);
         }
     };
@@ -41,13 +41,13 @@ export default function AuthenticatedLayout({ header, children }) {
         <div className="rc-theme h-screen relative flex overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(18,56,46,0.14),transparent_34%),radial-gradient(circle_at_90%_8%,rgba(195,161,83,0.14),transparent_24%),linear-gradient(180deg,#f7f0df_0%,#eadbb8_100%)] text-[#1d1a16] selection:bg-[#c3a153] selection:text-[#0b241d] font-['Libre_Baskerville',serif]">
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-[#061510]/55 backdrop-blur-sm lg:hidden"
+                    className="fixed inset-0 z-40 bg-[#061510]/55 backdrop-blur-sm 2xl:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 ></div>
             )}
 
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-80 rc-sidebar-shell shadow-[24px_0_90px_rgba(7,20,16,0.32)] transform transition-transform duration-500 ease-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} overflow-y-auto no-scrollbar`}
+                className={`fixed inset-y-0 left-0 z-50 w-80 rc-sidebar-shell shadow-[24px_0_90px_rgba(7,20,16,0.32)] transform transition-transform duration-500 ease-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full 2xl:translate-x-0'} overflow-y-auto no-scrollbar`}
             >
                 <div className="px-6 pt-6">
                     <div className="flex items-center justify-between rounded-[1.75rem] border border-[#c3a153]/20 bg-[rgba(255,248,230,0.04)] px-5 py-4">
@@ -60,7 +60,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
                         <button
                             onClick={() => setIsSidebarOpen(false)}
-                            className="rounded-full border border-white/10 p-2 text-[#f4e7c8] transition hover:bg-white/5 lg:hidden"
+                            className="rounded-full border border-white/10 p-2 text-[#f4e7c8] transition hover:bg-white/5 2xl:hidden"
                         >
                             ✕
                         </button>
@@ -229,17 +229,17 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             </aside>
 
-            <div className="flex min-w-0 flex-1 flex-col relative lg:ml-80 h-screen overflow-hidden">
-                <header className="sticky top-0 z-40 border-b border-[#c3a153]/18 bg-[rgba(247,240,223,0.82)] px-6 py-5 shadow-[0_16px_42px_rgba(39,28,16,0.08)] backdrop-blur-xl lg:px-12">
+            <div className="flex min-w-0 flex-1 flex-col relative 2xl:ml-80 h-screen overflow-hidden">
+                <header className="sticky top-0 z-40 border-b border-[#c3a153]/18 bg-[rgba(247,240,223,0.82)] px-6 py-5 shadow-[0_16px_42px_rgba(39,28,16,0.08)] backdrop-blur-xl 2xl:px-12">
                     <nav className="flex items-center justify-between gap-6">
                         <div className="flex items-center gap-6">
                             <button
                                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                className="rounded-2xl border border-[#c3a153]/20 bg-[rgba(255,248,230,0.8)] p-3 text-[#163329] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md lg:hidden"
+                                className="rounded-2xl border border-[#c3a153]/20 bg-[rgba(255,248,230,0.8)] p-3 text-[#163329] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md 2xl:hidden"
                             >
                                 ☰
                             </button>
-                            <div className="hidden flex-col lg:flex">
+                            <div className="hidden flex-col 2xl:flex">
                                 <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#355748]">Authenticated</h2>
                                 <h1 className="mt-1 font-['Playfair_Display',serif] text-3xl font-semibold tracking-tight text-[#17362b]">{header || 'Platform'}</h1>
                             </div>
@@ -326,10 +326,10 @@ export default function AuthenticatedLayout({ header, children }) {
                     </nav>
                 </header>
 
-                <main className="flex-1 overflow-y-auto no-scrollbar bg-[radial-gradient(circle_at_top,rgba(18,56,46,0.06),transparent_42%),linear-gradient(180deg,rgba(247,240,223,0.88),rgba(236,224,192,0.98))] px-6 py-8 lg:px-12 lg:py-10">
+                <main className="flex-1 overflow-y-auto no-scrollbar bg-[radial-gradient(circle_at_top,rgba(18,56,46,0.06),transparent_42%),linear-gradient(180deg,rgba(247,240,223,0.88),rgba(236,224,192,0.98))] px-6 py-8 2xl:px-12 2xl:py-10">
                     <div className="mx-auto max-w-7xl pb-10">
                         {header && (
-                            <div className="mb-6 lg:hidden">
+                            <div className="mb-6 2xl:hidden">
                                 {header}
                             </div>
                         )}
