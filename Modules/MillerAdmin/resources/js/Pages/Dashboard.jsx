@@ -11,6 +11,12 @@ export default function Dashboard({ auth, users, batches, orders, municipalities
         }
     };
 
+    const deleteOrder = (id) => {
+        if (confirm('Permanently delete this retailer order transaction from the system?')) {
+            destroy(route('admin.orders.destroy', id));
+        }
+    };
+
     return (
         <AuthenticatedLayout user={auth?.user}>
             <Head title="Admin Logistics Hub" />
@@ -21,7 +27,7 @@ export default function Dashboard({ auth, users, batches, orders, municipalities
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <div className="w-2 h-8 bg-emerald-600 rounded-full"></div>
-                                <h1 className="text-6xl font-black uppercase tracking-tighter text-emerald-950 leading-none">
+                                <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-emerald-950 leading-none">
                                     Admin Hub
                                 </h1>
                             </div>
@@ -39,7 +45,7 @@ export default function Dashboard({ auth, users, batches, orders, municipalities
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                         {[
                             { label: 'Active Users', value: users?.length || 0, color: 'bg-blue-400' },
                             { label: 'Harvest Batches', value: batches?.length || 0, color: 'bg-yellow-400' },
@@ -56,7 +62,7 @@ export default function Dashboard({ auth, users, batches, orders, municipalities
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                         {/* Users Hub */}
                         <div className="bg-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
                             <div className="bg-black p-4 flex justify-between items-center">
@@ -115,6 +121,46 @@ export default function Dashboard({ auth, users, batches, orders, municipalities
                                                         className="text-[9px] font-black text-red-500 uppercase underline hover:text-red-700"
                                                     >
                                                         Delete Record
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Retailer Orders Hub */}
+                        <div className="bg-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+                            <div className="bg-black p-4 flex justify-between items-center">
+                                <h3 className="text-white font-black uppercase tracking-widest text-xs">Retailer Orders</h3>
+                                <span className="text-[10px] text-white/50 font-bold uppercase">All Orders</span>
+                            </div>
+                            <div className="divide-y-2 divide-gray-100 max-h-[500px] overflow-y-auto">
+                                {orders?.map(order => (
+                                    <div key={order.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[9px] font-black bg-black text-white px-1">#{order.id}</span>
+                                                    <p className="font-black text-sm uppercase">{order.rice_variety}</p>
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 font-bold">Miller: {order.miller?.first_name} {order.miller?.last_name}</p>
+                                                <p className="text-[10px] text-gray-400 font-bold">Retailer: {order.retailer?.first_name} {order.retailer?.last_name}</p>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-2">
+                                                <span className={`px-2 py-0.5 border-2 border-black text-[9px] font-black uppercase ${
+                                                    order.status === 'completed' ? 'bg-green-400' : 'bg-yellow-400'
+                                                }`}>
+                                                    {order.status.replace('_', ' ')}
+                                                </span>
+                                                
+                                                {(order.status === 'completed' || order.status === 'cancelled') && (
+                                                    <button 
+                                                        onClick={() => deleteOrder(order.id)}
+                                                        className="text-[9px] font-black text-red-500 uppercase underline hover:text-red-700"
+                                                    >
+                                                        Delete Order
                                                     </button>
                                                 )}
                                             </div>

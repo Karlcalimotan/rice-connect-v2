@@ -38,7 +38,7 @@ export default function AuthenticatedLayout({ header, children }) {
     };
 
     return (
-        <div className="rc-theme min-h-screen relative flex overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(18,56,46,0.14),transparent_34%),radial-gradient(circle_at_90%_8%,rgba(195,161,83,0.14),transparent_24%),linear-gradient(180deg,#f7f0df_0%,#eadbb8_100%)] text-[#1d1a16] selection:bg-[#c3a153] selection:text-[#0b241d] font-['Libre_Baskerville',serif]">
+        <div className="rc-theme h-screen relative flex overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(18,56,46,0.14),transparent_34%),radial-gradient(circle_at_90%_8%,rgba(195,161,83,0.14),transparent_24%),linear-gradient(180deg,#f7f0df_0%,#eadbb8_100%)] text-[#1d1a16] selection:bg-[#c3a153] selection:text-[#0b241d] font-['Libre_Baskerville',serif]">
             {isSidebarOpen && (
                 <div
                     className="fixed inset-0 z-40 bg-[#061510]/55 backdrop-blur-sm lg:hidden"
@@ -229,7 +229,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             </aside>
 
-            <div className="flex min-w-0 flex-1 flex-col relative lg:ml-80">
+            <div className="flex min-w-0 flex-1 flex-col relative lg:ml-80 h-screen overflow-hidden">
                 <header className="sticky top-0 z-40 border-b border-[#c3a153]/18 bg-[rgba(247,240,223,0.82)] px-6 py-5 shadow-[0_16px_42px_rgba(39,28,16,0.08)] backdrop-blur-xl lg:px-12">
                     <nav className="flex items-center justify-between gap-6">
                         <div className="flex items-center gap-6">

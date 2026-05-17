@@ -30,6 +30,18 @@ class DeliveryScheduledNotification extends Notification
 
     public function toArray(object $notifiable): array
     {
+        $order = \App\Models\Order::find($this->entityId);
+        $method = $order && $order->shipping_method === 'pickup' ? 'pickup' : 'delivery';
+
+        if ($method === 'pickup') {
+            return [
+                'message' => "Your rice order pickup is scheduled for " . $this->date . ".",
+                'type' => 'logistics',
+                'date' => $this->date,
+                'id' => $this->entityId,
+            ];
+        }
+
         return [
             'message' => "Your rice delivery is scheduled for " . $this->date . ". Please prepare storage.",
             'type' => 'logistics',

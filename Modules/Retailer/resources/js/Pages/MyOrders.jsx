@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import React from 'react';
 
 export default function MyOrders({ auth, orders, design_css_url }) {
@@ -47,7 +47,7 @@ export default function MyOrders({ auth, orders, design_css_url }) {
                                             <button
                                                 onClick={() => {
                                                     if(confirm('Have you received all items in good condition?')) {
-                                                        import('@inertiajs/react').then(m => m.router.patch(route('retailer.order.confirm_received', order.id)));
+                                                        router.patch(route('retailer.order.confirm_received', order.id));
                                                     }
                                                 }}
                                                 className="bg-emerald-950 text-white px-6 py-2 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:scale-95"
@@ -56,12 +56,26 @@ export default function MyOrders({ auth, orders, design_css_url }) {
                                             </button>
                                         )}
 
-                                        {order.status === 'completed' && (
-                                            <div className="flex items-center gap-1 text-green-600">
-                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-                                                <span className="text-[10px] font-black uppercase">Finalized</span>
-                                            </div>
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                            {order.status === 'completed' && (
+                                                <div className="flex items-center gap-1 text-green-600">
+                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+                                                    <span className="text-[10px] font-black uppercase">Finalized</span>
+                                                </div>
+                                            )}
+                                            {(order.status === 'completed' || order.status === 'cancelled') && (
+                                                <button
+                                                    onClick={() => {
+                                                        if(confirm('Are you sure you want to delete this completed purchase from your history?')) {
+                                                            router.delete(route('retailer.order.delete', order.id));
+                                                        }
+                                                    }}
+                                                    className="text-[10px] font-black text-rose-600 uppercase underline hover:text-rose-800 ml-4"
+                                                >
+                                                    Delete Record
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))

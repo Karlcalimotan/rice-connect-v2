@@ -212,4 +212,20 @@ class DriverController extends Controller
 
         return redirect()->back()->with('message', 'Final sign-off complete! Delivery finalized.');
     }
+
+    /**
+     * Clear driver assignment for completed history records.
+     */
+    public function deleteHistory($type, $id)
+    {
+        if ($type === 'palay') {
+            $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
+            $batch->update(['driver_id' => null]);
+        } elseif ($type === 'rice') {
+            $order = Order::where('driver_id', auth()->id())->findOrFail($id);
+            $order->update(['driver_id' => null]);
+        }
+
+        return redirect()->back()->with('message', 'Completed history record deleted.');
+    }
 }
