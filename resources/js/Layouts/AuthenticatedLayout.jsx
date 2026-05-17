@@ -1,7 +1,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
 // Scoped Rice Connect theme for authenticated pages (excludes landing)
 import '../../css/rc-theme.css';
@@ -18,7 +18,7 @@ const Icons = {
 };
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { user, notifications = [] } = usePage().props.auth;
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const initials = `${user?.first_name?.[0] ?? ''}${user?.last_name?.[0] ?? ''}`.trim() || 'RC';
 
@@ -176,7 +176,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <li>
                                         <NavLink href={route('driver.dashboard')} active={route().current('driver.dashboard')} onClick={handleNavClick} className="w-full">
                                             <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-[#c3a153]/20 bg-white/5 text-[#d8bd73]"><Icons.Logistics /></span>
-                                            <span>Operations</span>
+                                            <span>Dashboard</span>
                                         </NavLink>
                                     </li>
                                 )}
@@ -192,7 +192,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <li>
                                             <NavLink href={route('admin.dashboard')} active={route().current('admin.dashboard')} onClick={handleNavClick} className="w-full">
                                                 <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-[#c3a153]/20 bg-white/5 text-[#d8bd73]"><Icons.Console /></span>
-                                                <span>Admin Hub</span>
+                                                <span>Dashboard</span>
                                             </NavLink>
                                         </li>
                                         <li>
@@ -246,6 +246,65 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
 
                         <div className="flex items-center gap-4">
+                            {/* Notification Dropdown (Exclude Admin) */}
+                            {user.role !== 'admin' && (
+                                <Dropdown>
+                                    <Dropdown.Trigger>
+                                        <button className="relative flex h-11 w-11 items-center justify-center rounded-[1.1rem] border border-[#c3a153]/20 bg-[rgba(255,248,230,0.86)] text-[#103227] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                            <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24">
+                                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" />
+                                            </svg>
+                                            {notifications.length > 0 && (
+                                                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white shadow-sm ring-2 ring-[#f7f0df]">
+                                                    {notifications.length}
+                                                </span>
+                                            )}
+                                        </button>
+                                    </Dropdown.Trigger>
+                                    <Dropdown.Content width="80" align="right">
+                                        <div className="px-4 py-3 border-b border-[#c3a153]/10 bg-[rgba(255,248,230,0.05)]">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d9c6a0]">Notifications</p>
+                                        </div>
+                                        <div className="max-h-[300px] overflow-y-auto no-scrollbar">
+                                            {notifications.length === 0 ? (
+                                                <div className="px-4 py-6 text-center text-xs font-semibold text-[#8a723e] italic">
+                                                    No new notifications
+                                                </div>
+                                            ) : (
+                                                notifications.map((notif) => (
+                                                    <button
+                                                        key={notif.id}
+                                                        onClick={() => {
+                                                            router.post(route('notifications.mark_as_read', notif.id), {}, {
+                                                                preserveScroll: true,
+                                                                onSuccess: () => {
+                                                                    if (notif.data.action_url) {
+                                                                        router.visit(notif.data.action_url);
+                                                                    }
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="w-full text-left px-4 py-3 border-b border-[#c3a153]/10 hover:bg-[#c3a153]/10 transition flex flex-col gap-1"
+                                                    >
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[#c3a153]">
+                                                                {notif.data.title || 'Notification'}
+                                                            </span>
+                                                            <span className="text-[8px] font-bold text-[#8a723e]">
+                                                                {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-[#2c2211] font-semibold leading-relaxed">
+                                                            {notif.data.message}
+                                                        </p>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                    </Dropdown.Content>
+                                </Dropdown>
+                            )}
+
                             <Dropdown>
                                 <Dropdown.Trigger>
                                     <button className="flex items-center gap-3 rounded-[1.5rem] border border-[#c3a153]/20 bg-[rgba(255,248,230,0.86)] px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">

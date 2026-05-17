@@ -91,7 +91,7 @@ class FarmerController extends Controller
         'total_sacks'    => 'required|integer|min:1',
     ]);
 
-    HarvestBatch::create([
+    $batch = HarvestBatch::create([
         'user_id'        => auth()->id(),
         'location'       => $validated['location'], 
         'rice_variety'   => $validated['rice_variety'],
@@ -105,6 +105,18 @@ class FarmerController extends Controller
         'total_weight'   => 0,
         'price_per_kg'   => 0,
     ]);
+
+    // Notify all millers
+    $farmer = auth()->user();
+    $millers = \App\Models\User::where('role', 'miller')->get();
+    foreach ($millers as $miller) {
+        $miller->notify(new \App\Notifications\NewHarvestPostedNotification(
+            $farmer->first_name . ' ' . $farmer->last_name,
+            $batch->id,
+            $batch->rice_variety,
+            $batch->total_sacks
+        ));
+    }
 
     return redirect()->route('farmer.harvest')->with('message', 'Harvest logged successfully! Waiting for pickup.');
 }
