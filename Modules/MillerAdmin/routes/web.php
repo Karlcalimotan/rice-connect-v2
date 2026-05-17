@@ -15,4 +15,5 @@ Route::middleware(['web', 'auth', 'verified', 'role:admin'])->group(function () 
     
     // Administrative Actions
     Route::delete('/admin/harvest-batches/{id}', [MillerAdminController::class, 'destroyHarvestBatch'])->name('admin.harvest_batches.destroy');
+    Route::delete('/admin/orders/{id}', [MillerAdminController::class, 'destroyOrder'])->name('admin.orders.destroy');
 });

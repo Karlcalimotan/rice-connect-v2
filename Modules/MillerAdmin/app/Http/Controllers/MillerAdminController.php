@@ -125,4 +125,20 @@ class MillerAdminController extends Controller
 
         return redirect()->back()->with('message', 'Record permanently deleted.');
     }
+
+    /**
+     * Administrative deletion of a completed Retailer Order.
+     */
+    public function destroyOrder($id)
+    {
+        $order = \App\Models\Order::findOrFail($id);
+
+        if ($order->status !== 'completed' && $order->status !== 'cancelled') {
+            return redirect()->back()->withErrors(['error' => 'Can only delete completed or cancelled orders.']);
+        }
+
+        $order->delete();
+
+        return redirect()->back()->with('message', 'Retailer Order permanently deleted by Administrator.');
+    }
 }

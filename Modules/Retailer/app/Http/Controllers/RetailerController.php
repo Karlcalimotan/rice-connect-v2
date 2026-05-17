@@ -190,4 +190,20 @@ class RetailerController extends Controller
 
         return redirect()->back()->with('message', 'Delivery confirmed and signed! Order completed.');
     }
+
+    /**
+     * Retailer deletes a completed/cancelled order.
+     */
+    public function deleteOrder($id)
+    {
+        $order = \App\Models\Order::where('retailer_id', auth()->id())->findOrFail($id);
+
+        if ($order->status !== 'completed' && $order->status !== 'cancelled') {
+            return redirect()->back()->withErrors('Can only delete completed or cancelled transactions.');
+        }
+
+        $order->delete();
+
+        return redirect()->back()->with('message', 'Completed purchase deleted.');
+    }
 }

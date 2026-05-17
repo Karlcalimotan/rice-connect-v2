@@ -21,7 +21,7 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
     };
 
     return (
-        <AuthenticatedLayout user={auth?.user}>
+        <AuthenticatedLayout user={auth?.user} header="Road Ops">
             <Head title="Driver Dashboard" />
 
             <div className="py-12 bg-transparent min-h-screen">
@@ -33,21 +33,21 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                         <div className="space-y-6">
                             <h3 className="text-2xl font-black uppercase text-orange-600">Palay Pickups</h3>
                             
                             {!palayAssignments || palayAssignments.length === 0 ? (
-                                <div className="glass-card p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-emerald-900/10">
+                                <div className="glass-card p-6 sm:p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-emerald-900/10">
                                     <span className="text-4xl mb-4 opacity-50">🌾</span>
                                     <p className="text-emerald-950/40 font-black uppercase tracking-widest text-[10px]">No pending palay pickups.</p>
                                 </div>
                             ) : (
                                 palayAssignments.map((batch) => (
-                                    <div key={batch.id} className="glass-card group relative p-8">
+                                    <div key={batch.id} className="glass-card group relative p-4 sm:p-8">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-emerald-500/10 transition-all"></div>
                                         
-                                        <div className="relative flex justify-between items-start mb-6">
+                                        <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
@@ -152,18 +152,17 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
 
                         <div className="space-y-6">
                             <h3 className="text-2xl font-black uppercase text-blue-600">Rice Deliveries</h3>
-                            
-                            {!riceAssignments || riceAssignments.length === 0 ? (
-                                <div className="glass-card p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-emerald-900/10">
+                                      {!riceAssignments || riceAssignments.length === 0 ? (
+                                <div className="glass-card p-6 sm:p-12 text-center flex flex-col items-center justify-center border-dashed border-2 border-emerald-900/10">
                                     <span className="text-4xl mb-4 opacity-50">📦</span>
                                     <p className="text-emerald-950/40 font-black uppercase tracking-widest text-[10px]">No active rice deliveries.</p>
                                 </div>
                             ) : (
                                 riceAssignments.map((order) => (
-                                    <div key={order.id} className="glass-card group relative p-8">
+                                    <div key={order.id} className="glass-card group relative p-4 sm:p-8">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-blue-500/10 transition-all"></div>
 
-                                        <div className="relative flex justify-between items-start mb-6">
+                                        <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -224,7 +223,19 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
                                                 <p className="text-[10px] font-black uppercase">{item.rice_variety}</p>
                                                 <p className="text-[8px] font-bold text-gray-400">{new Date(item.updated_at).toLocaleDateString()}</p>
                                             </div>
-                                            <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Completed</span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Completed</span>
+                                                <button
+                                                    onClick={() => {
+                                                        if(confirm('Are you sure you want to delete this completed record?')) {
+                                                            router.delete(route('driver.history.delete', { type: 'palay', id: item.id }));
+                                                        }
+                                                    }}
+                                                    className="text-[8px] font-black text-rose-600 uppercase underline hover:text-rose-800"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                                 )}
@@ -240,7 +251,19 @@ export default function Dashboard({ auth, palayAssignments, riceAssignments, his
                                                 <p className="text-[10px] font-black uppercase">{item.rice_variety}</p>
                                                 <p className="text-[8px] font-bold text-gray-400">{new Date(item.updated_at).toLocaleDateString()}</p>
                                             </div>
-                                            <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Delivered</span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Delivered</span>
+                                                <button
+                                                    onClick={() => {
+                                                        if(confirm('Are you sure you want to delete this completed record?')) {
+                                                            router.delete(route('driver.history.delete', { type: 'rice', id: item.id }));
+                                                        }
+                                                    }}
+                                                    className="text-[8px] font-black text-rose-600 uppercase underline hover:text-rose-800"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                                 )}

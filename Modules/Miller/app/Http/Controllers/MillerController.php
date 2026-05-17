@@ -334,16 +334,77 @@ class MillerController extends Controller
         ]);
     }
 
-    /**
-     * Mark order as ready for pickup.
-     */
     public function readyForPickup($id)
     {
-        \App\Models\Order::where('id', $id)
+        $order = \App\Models\Order::where('id', $id)
             ->where('miller_id', auth()->id())
-            ->update(['status' => 'ready_for_pickup']);
+            ->firstOrFail();
+
+        $order->update(['status' => 'ready_for_pickup']);
+
+        $order->retailer->notify(new \App\Notifications\RiceReadyForPickupNotification($order->id));
 
         return redirect()->back()->with('message', 'Order marked as Ready for Pickup.');
+    }
+
+    /**
+     * Mark a pickup order as complete (finalized).
+     */
+    public function completePickup($id)
+    {
+        $order = \App\Models\Order::where('miller_id', auth()->id())
+            ->where('shipping_method', 'pickup')
+            ->findOrFail($id);
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($order) {
+            $order->update([
+                'delivery_status' => 'Confirmed Received',
+                'status' => 'completed',
+                'updated_at' => now()
+            ]);
+
+            $retailerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->retailer_id]);
+            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
+
+            $retailerWallet->debit($order->total_price);
+            $millerWallet->credit($order->total_price);
+
+            \App\Models\LedgerEntry::create([
+                'user_id' => $order->retailer_id,
+                'amount' => $order->total_price,
+                'type' => 'debit',
+                'reference_type' => get_class($order),
+                'reference_id' => $order->id,
+                'description' => 'Payment for Rice Order #' . $order->id . ' (Picked up)'
+            ]);
+
+            \App\Models\LedgerEntry::create([
+                'user_id' => auth()->id(),
+                'amount' => $order->total_price,
+                'type' => 'credit',
+                'reference_type' => get_class($order),
+                'reference_id' => $order->id,
+                'description' => 'Payment received for Rice Order #' . $order->id . ' (Picked up)'
+            ]);
+        });
+
+        return redirect()->back()->with('message', 'Pickup completed successfully!');
+    }
+
+    /**
+     * Delete a completed/cancelled order.
+     */
+    public function deleteOrder($id)
+    {
+        $order = \App\Models\Order::where('miller_id', auth()->id())->findOrFail($id);
+
+        if ($order->status !== 'completed' && $order->status !== 'cancelled') {
+            return redirect()->back()->withErrors('Can only delete completed or cancelled transactions.');
+        }
+
+        $order->delete();
+
+        return redirect()->back()->with('message', 'Completed transaction deleted.');
     }
 
     /**

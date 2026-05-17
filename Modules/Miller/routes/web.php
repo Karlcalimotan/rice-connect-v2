@@ -34,6 +34,8 @@ Route::middleware(['auth', 'verified', 'role:miller'])->group(function () {
     // Miller Order Management (Logistics)
     Route::get('/miller/orders', [MillerController::class, 'millerOrders'])->name('miller.orders');
     Route::post('/miller/orders/{id}/ready', [MillerController::class, 'readyForPickup'])->name('miller.order.ready');
+    Route::post('/miller/orders/{id}/complete-pickup', [MillerController::class, 'completePickup'])->name('miller.order.complete_pickup');
+    Route::delete('/miller/orders/{id}', [MillerController::class, 'deleteOrder'])->name('miller.order.delete');
     
     // Unified Transport Hub
     Route::get('/miller/transport', [MillerController::class, 'transport'])->name('miller.transport');

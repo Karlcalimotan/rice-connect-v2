@@ -77,12 +77,12 @@ export default function Transport({ auth, inbound, outbound, allDrivers, myFleet
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div className="flex items-center gap-3 mb-10">
                         <div className="w-3 h-10 bg-black border-2 border-green-500"></div>
-                        <h2 className="text-5xl font-black uppercase tracking-tighter text-emerald-950 leading-none">
+                        <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tighter text-emerald-950 leading-none">
                             Transport Hub
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                         {/* INBOUND: Palay Picking */}
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
@@ -97,10 +97,10 @@ export default function Transport({ auth, inbound, outbound, allDrivers, myFleet
                                 </div>
                             ) : (
                                 inbound.map((batch) => (
-                                    <div key={batch.id} className="glass-card group relative p-8">
+                                    <div key={batch.id} className="glass-card group relative p-4 sm:p-8">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-emerald-500/10 transition-all"></div>
                                         
-                                        <div className="relative flex justify-between items-start mb-6">
+                                        <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
@@ -226,10 +226,10 @@ export default function Transport({ auth, inbound, outbound, allDrivers, myFleet
                                 </div>
                             ) : (
                                 outbound.map((order) => (
-                                    <div key={order.id} className="glass-card group relative p-8">
+                                    <div key={order.id} className="glass-card group relative p-4 sm:p-8">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-blue-500/10 transition-all"></div>
 
-                                        <div className="relative flex justify-between items-start mb-6">
+                                        <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>

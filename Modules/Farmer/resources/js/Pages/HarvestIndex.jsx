@@ -65,6 +65,17 @@ export default function HarvestIndex({ batches }) {
                                                         {batch.status === 'pending' && (
                                                             <button className="text-green-600 hover:text-green-900" aria-label={`Accept order for harvest ${batch.id}`}>Accept Order</button>
                                                         )}
+                                                        {(batch.status === 'received' || batch.status === 'milled' || batch.status === 'processed') && (
+                                                            <Link
+                                                                method="delete"
+                                                                as="button"
+                                                                href={route('farmer.harvest.destroy', batch.id)}
+                                                                className="text-red-600 hover:text-red-900 ml-4 font-black"
+                                                                aria-label={`Delete completed harvest ${batch.id}`}
+                                                            >
+                                                                Delete
+                                                            </Link>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}

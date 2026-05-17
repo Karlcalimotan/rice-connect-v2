@@ -40,11 +40,11 @@ export default function MyPurchases({ auth, orders, design_css_url }) {
                 <title>My Orders</title>
                 {design_css_url && <link rel="stylesheet" href={design_css_url} />}
             </Head>
-            <div className="p-6 bg-transparent min-h-screen">
+            <div className="p-4 sm:p-6 bg-transparent min-h-screen">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center gap-3 mb-10">
                         <div className="w-1.5 h-8 bg-emerald-600 rounded-full shadow-[0_0_15px_rgba(5,150,105,0.4)]"></div>
-                        <h2 className="text-5xl font-black uppercase tracking-tighter text-emerald-950 leading-none">
+                        <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tighter text-emerald-950 leading-none">
                             My Orders
                         </h2>
                     </div>
@@ -54,10 +54,10 @@ export default function MyPurchases({ auth, orders, design_css_url }) {
                             orders.map((order) => {
                                 const badge = badgeConfig(order.status, order.delivery_status);
                                 return (
-                                    <div key={order.id} className="glass-card p-10 relative overflow-hidden group">
+                                    <div key={order.id} className="glass-card p-4 sm:p-10 relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl"></div>
 
-                                        <div className="flex flex-col lg:flex-row justify-between items-start gap-12 mb-10">
+                                        <div className="flex flex-col lg:flex-row justify-between items-start gap-6 lg:gap-12 mb-10">
                                             <div className="flex-1 space-y-4">
                                                 <div className="flex items-center gap-3">
                                                     <span className="px-3 py-1 rounded-lg bg-emerald-950 text-white text-[9px] font-black uppercase tracking-widest">
@@ -67,10 +67,10 @@ export default function MyPurchases({ auth, orders, design_css_url }) {
                                                         {new Date(order.created_at).toLocaleDateString()}
                                                     </span>
                                                 </div>
-                                                <h3 className="text-5xl font-black uppercase tracking-tighter text-emerald-950 leading-tight">
+                                                <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tighter text-emerald-950 leading-tight">
                                                     {order.rice_variety}
                                                 </h3>
-                                                <p className="text-2xl font-black text-emerald-700">{order.sacks} Sacks</p>
+                                                <p className="text-xl sm:text-2xl font-black text-emerald-700">{order.sacks} Sacks</p>
                                                 
                                                 <div className="mt-8 flex items-center gap-4 p-4 rounded-2xl bg-white/95 border border-white/60 w-fit">
                                                     <div>
@@ -82,7 +82,7 @@ export default function MyPurchases({ auth, orders, design_css_url }) {
 
                                             <div className="text-left lg:text-right min-w-[280px] space-y-6">
                                                 <div>
-                                                    <p className="text-6xl font-black text-emerald-600 tracking-tighter leading-none">₱{Number(order.total_price).toLocaleString()}</p>
+                                                    <p className="text-4xl sm:text-5xl lg:text-6xl font-black text-emerald-600 tracking-tighter leading-none">₱{Number(order.total_price).toLocaleString()}</p>
                                                 </div>
                                                 
                                                 <div className="flex flex-col items-start lg:items-end gap-3 pt-4 border-t border-emerald-950/5">
@@ -94,7 +94,14 @@ export default function MyPurchases({ auth, orders, design_css_url }) {
                                         </div>
 
                                         <div className="pt-10 border-t border-emerald-950/5">
-                                            <DeliveryStatusStepper status={order.delivery_status || 'Pending'} type="rice" />
+                                            <DeliveryStatusStepper 
+                                                status={
+                                                    (order.shipping_method === 'pickup' && order.status === 'pending_preparation' && order.scheduled_delivery_date) 
+                                                        ? 'date_scheduled' 
+                                                        : (order.shipping_method === 'pickup' ? order.status : order.delivery_status || 'Pending')
+                                                } 
+                                                type={order.shipping_method === 'pickup' ? 'rice_pickup' : 'rice'} 
+                                            />
                                             
                                             {order.delivery_status === 'Delivered' && (
                                                 <div className="mt-12 flex justify-center">
