@@ -30,19 +30,26 @@ Route::middleware('auth')->group(function () {
 });
 
 // Analytics pages (Inertia)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:farmer'])->group(function () {
     Route::get('/analytics/farmer', [\App\Http\Controllers\AnalyticsPageController::class, 'farmer'])->name('analytics.farmer');
-    Route::get('/analytics/miller', [\App\Http\Controllers\AnalyticsPageController::class, 'miller'])->name('analytics.miller');
-    Route::get('/analytics/retailer', [\App\Http\Controllers\AnalyticsPageController::class, 'retailer'])->name('analytics.retailer');
-    Route::get('/analytics/admin', [\App\Http\Controllers\AnalyticsPageController::class, 'admin'])->name('analytics.admin');
-    
-    // Unified Analytics Data API (Web-accessible for Inertia)
-    Route::get('/api/analytics/data', [\App\Http\Controllers\AnalyticsController::class, 'getData'])->name('api.analytics.data');
 });
 
-// Admin Dashboard
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:miller'])->group(function () {
+    Route::get('/analytics/miller', [\App\Http\Controllers\AnalyticsPageController::class, 'miller'])->name('analytics.miller');
+});
+
+Route::middleware(['auth', 'role:retailer'])->group(function () {
+    Route::get('/analytics/retailer', [\App\Http\Controllers\AnalyticsPageController::class, 'retailer'])->name('analytics.retailer');
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/analytics/admin', [\App\Http\Controllers\AnalyticsPageController::class, 'admin'])->name('analytics.admin');
     Route::get('/admin/analytics', function() { return Inertia::render('Analytics/AdminDashboard'); })->name('admin.analytics');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Unified Analytics Data API (Web-accessible for Inertia)
+    Route::get('/api/analytics/data', [\App\Http\Controllers\AnalyticsController::class, 'getData'])->name('api.analytics.data');
 });
 
 require __DIR__.'/auth.php';

@@ -3,7 +3,7 @@
 use Modules\Farmer\Http\Controllers\FarmerController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:farmer'])->group(function () {
     Route::get('/farmer/harvest', [FarmerController::class, 'index'])->name('farmer.harvest');
     Route::get('/farmer/harvest/create', [FarmerController::class, 'create'])->name('farmer.harvest.create');
     Route::post('/farmer/harvest', [FarmerController::class, 'store'])->name('farmer.harvest.store');

@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Miller\Http\Controllers\MillerController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:miller'])->group(function () {
     
     // 1. The Marketplace (Browse local rice)
     Route::get('/miller/marketplace', [MillerController::class, 'index'])->name('miller.marketplace');

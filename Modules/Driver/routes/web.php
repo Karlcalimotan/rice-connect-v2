@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Driver\Http\Controllers\DriverController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:driver'])->group(function () {
     Route::get('/driver/dashboard', [DriverController::class, 'index'])->name('driver.dashboard');
     
     // Palay Actions (Farmer -> Miller)
@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rice Actions (Miller -> Retailer)
     Route::post('/driver/orders/{id}/start-trip', [DriverController::class, 'startRiceTrip'])->name('driver.order.start_trip');
     Route::post('/driver/orders/{id}/deliver', [DriverController::class, 'deliverRice'])->name('driver.order.deliver');
+    Route::post('/driver/orders/{id}/final-sign-off', [DriverController::class, 'finalSignOff'])->name('driver.order.final_sign_off');
 
     Route::resource('drivers', DriverController::class)->names('driver');
 });
