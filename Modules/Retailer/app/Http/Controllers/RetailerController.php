@@ -112,7 +112,8 @@ class RetailerController extends Controller
 
     public function myOrders(): Response
     {
-        $orders = \App\Models\Order::where('retailer_id', auth()->id())
+        $orders = \App\Models\Order::with(['miller', 'driver'])
+            ->where('retailer_id', auth()->id())
             ->latest()
             ->get();
 
@@ -124,7 +125,7 @@ class RetailerController extends Controller
 
     public function myPurchases(): Response
     {
-        $orders = \App\Models\Order::with('miller')
+        $orders = \App\Models\Order::with(['miller', 'driver'])
             ->where('retailer_id', auth()->id())
             ->latest()
             ->get();
@@ -133,6 +134,77 @@ class RetailerController extends Controller
             'orders' => $orders,
             'design_css_url' => '/design/rice-connect-dashboard/styles.css',
         ]);
+    }
+
+    /**
+     * List verified drivers a retailer can book for a pending delivery order.
+     */
+    public function drivers($id)
+    {
+        $order = \App\Models\Order::where('retailer_id', auth()->id())->findOrFail($id);
+
+        if ($order->shipping_method !== 'delivery' || $order->delivery_status !== 'Pending' || $order->driver_id) {
+            return response()->json(['drivers' => []]);
+        }
+
+        $drivers = \App\Models\User::where('role', 'driver')
+            ->where('is_verified_driver', true)
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name', 'vehicle_type']);
+
+        return response()->json(['drivers' => $drivers]);
+    }
+
+    /**
+     * Retailer explicitly books a driver for their pending delivery order.
+     */
+    public function bookDriver(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'driver_id' => 'required|exists:users,id',
+        ]);
+
+        $order = \App\Models\Order::where('retailer_id', auth()->id())->findOrFail($id);
+
+        if ($order->shipping_method !== 'delivery') {
+            return redirect()->back()->withErrors('This order is not a delivery order.');
+        }
+
+        if ($order->delivery_status !== 'Pending') {
+            return redirect()->back()->withErrors('A driver can only be booked while the order is still pending.');
+        }
+
+        if ($order->driver_id) {
+            return redirect()->back()->withErrors('A driver is already assigned to this order.');
+        }
+
+        $driver = \App\Models\User::where('role', 'driver')
+            ->where('is_verified_driver', true)
+            ->find($validated['driver_id']);
+
+        if (!$driver) {
+            return redirect()->back()->withErrors('That driver is not available.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($order, $driver) {
+            $order->update([
+                'driver_id' => $driver->id,
+                'delivery_status' => 'Pending',
+            ]);
+
+            // Withdraw the pending pool booking and assign it to the chosen driver.
+            \App\Models\Booking::where('order_id', $order->id)
+                ->where('status', \App\Enums\BookingStatus::Pending->value)
+                ->update([
+                    'driver_id' => $driver->id,
+                    'status' => \App\Enums\BookingStatus::Assigned->value,
+                ]);
+
+            $driver->notify(new \App\Notifications\BookingAssignedNotification($order));
+            $order->miller?->notify(new \App\Notifications\BookingAssignedNotification($order));
+        });
+
+        return redirect()->back()->with('message', $driver->first_name . ' ' . $driver->last_name . ' has been booked for your delivery.');
     }
 
     /**

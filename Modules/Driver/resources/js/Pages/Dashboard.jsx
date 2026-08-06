@@ -2,25 +2,30 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 
-export default function Dashboard({ auth, pendingBookings = [], activeBookings = [], history = { palay: [], rice: [] } }) {
+export default function Dashboard({ auth, pendingBookings = [], activeBookings = [], deliveredBookings = [], palayAssignments = [], riceAssignments = [], history = { palay: [], rice: [] } }) {
     const [localPending, setLocalPending] = useState(pendingBookings);
+    const [weightData, setWeightData] = useState({});
     
     // Sync with props
     React.useEffect(() => {
         setLocalPending(pendingBookings);
     }, [pendingBookings]);
 
+    // Keep the radar live: pull new broadcasts every 10s
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            router.reload({ only: ['pendingBookings', 'activeBookings', 'deliveredBookings', 'history'], preserveScroll: true });
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
     const handleAcceptJob = (bookingId) => {
         // Optimistic UI update: instantly filter out accepted card
         setLocalPending(prev => prev.filter(b => b.id !== bookingId));
 
         router.post(route('bookings.accept', bookingId), {}, {
-            onSuccess: () => {
-                // Instantly reloads/refresh state invalidation
-            },
-            onError: (err) => {
-                alert(err.message || 'Failed to claim job.');
-                // Revert on error
+            onError: () => {
+                // Revert on error; the flash message surfaces via Inertia
                 setLocalPending(pendingBookings);
             }
         });
@@ -30,6 +35,18 @@ export default function Dashboard({ auth, pendingBookings = [], activeBookings =
         router.post(route('bookings.update_status', bookingId), {
             status: nextStatus
         });
+    };
+
+    const handleLogWeight = (batchId) => {
+        const w = weightData[batchId] || {};
+        router.post(route('driver.palay.request_pickup', batchId), {
+            actual_weight_kg: w.actual_weight_kg,
+            suggested_price_per_kg: w.suggested_price_per_kg,
+        });
+    };
+
+    const setWeight = (batchId, field, value) => {
+        setWeightData(prev => ({ ...prev, [batchId]: { ...prev[batchId], [field]: value } }));
     };
 
     return (
@@ -191,13 +208,60 @@ export default function Dashboard({ auth, pendingBookings = [], activeBookings =
                                                     </button>
                                                 )}
 
-                                                {booking.status === 'at_pickup' && (
+                                                {booking.status === 'at_pickup' && !booking.harvest_batch_id && (
                                                     <button
                                                         onClick={() => handleUpdateStatus(booking.id, 'in_transit')}
                                                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase py-3.5 px-6 rounded-full text-xs border-2 border-black tracking-widest transition-all shadow-md"
                                                     >
                                                         Confirm Load & Start Transit
                                                     </button>
+                                                )}
+
+                                                {booking.status === 'at_pickup' && booking.harvest_batch_id && (
+                                                    booking.harvest_batch?.delivery_status === 'Payment Authorized' ? (
+                                                        <button
+                                                            onClick={() => handleUpdateStatus(booking.id, 'in_transit')}
+                                                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase py-3.5 px-6 rounded-full text-xs border-2 border-black tracking-widest transition-all shadow-md"
+                                                        >
+                                                            Confirm Load & Start Transit
+                                                        </button>
+                                                    ) : booking.harvest_batch?.delivery_status === 'Payment Pending' ? (
+                                                        <div className="p-4 bg-yellow-50 border-2 border-dashed border-yellow-400 rounded-2xl text-center">
+                                                            <p className="text-yellow-800 font-bold text-xs uppercase">
+                                                                ⚖️ Weight logged. Waiting for Miller to authorize payment...
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-4 bg-white/50 border-2 border-black rounded-2xl">
+                                                            <label className="block text-[10px] font-black uppercase mb-2 text-emerald-950/60">Log Palay Weight & Price</label>
+                                                            <div className="flex gap-2 mb-2">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0.01"
+                                                                    step="0.01"
+                                                                    placeholder="Weight (kg)"
+                                                                    className="flex-1 border-2 border-black p-2 font-black text-xs rounded-lg"
+                                                                    value={weightData[booking.harvest_batch_id]?.actual_weight_kg || ''}
+                                                                    onChange={e => setWeight(booking.harvest_batch_id, 'actual_weight_kg', e.target.value)}
+                                                                />
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    placeholder="Price (₱/kg)"
+                                                                    className="flex-1 border-2 border-black p-2 font-black text-xs rounded-lg"
+                                                                    value={weightData[booking.harvest_batch_id]?.suggested_price_per_kg || ''}
+                                                                    onChange={e => setWeight(booking.harvest_batch_id, 'suggested_price_per_kg', e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleLogWeight(booking.harvest_batch_id)}
+                                                                className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black uppercase py-3.5 px-6 rounded-full text-xs border-2 border-black tracking-widest transition-all shadow-md"
+                                                            >
+                                                                Log Weight & Request Payment
+                                                            </button>
+                                                        </div>
+                                                    )
                                                 )}
 
                                                 {booking.status === 'in_transit' && (
@@ -230,6 +294,50 @@ export default function Dashboard({ auth, pendingBookings = [], activeBookings =
                     {/* HISTORICAL SHIPMENTS SECTION */}
                     <div className="mt-20 border-t-2 border-dashed border-emerald-900/10 pt-10">
                         <h3 className="text-2xl font-black uppercase mb-8 text-emerald-900">Assignment History</h3>
+
+                        {deliveredBookings.length > 0 && (
+                            <div className="mb-10">
+                                <h4 className="text-xs font-black uppercase text-emerald-600 mb-4">Delivered — Awaiting Receiver Confirmation</h4>
+                                <div className="space-y-3">
+                                    {deliveredBookings.map((booking) => (
+                                        <div key={booking.id} className="bg-emerald-50/60 backdrop-blur-sm border-2 border-emerald-300 p-4 rounded-2xl flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs font-black uppercase">{booking.harvest_batch_id ? 'Palay' : 'Rice'} Trip #{booking.id}</p>
+                                                <p className="text-[9px] font-bold text-gray-500">{booking.origin_address} ➔ {booking.destination_address}</p>
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase px-3 py-1 bg-emerald-600 text-white rounded-full">Delivered</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {(palayAssignments.length > 0 || riceAssignments.length > 0) && (
+                            <div className="mb-10">
+                                <h4 className="text-xs font-black uppercase text-gray-400 mb-4">Direct Assignments</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {palayAssignments.map(item => (
+                                        <div key={`palay-${item.id}`} className="bg-white/40 backdrop-blur-sm border-2 border-black/5 p-4 rounded-2xl flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs font-black uppercase">{item.rice_variety}</p>
+                                                <p className="text-[9px] font-bold text-gray-400">{item.user?.first_name} {item.user?.last_name} • Palay</p>
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase px-3 py-1 bg-amber-100 text-amber-700 rounded-full">{item.delivery_status}</span>
+                                        </div>
+                                    ))}
+                                    {riceAssignments.map(item => (
+                                        <div key={`rice-${item.id}`} className="bg-white/40 backdrop-blur-sm border-2 border-black/5 p-4 rounded-2xl flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs font-black uppercase">{item.rice_variety}</p>
+                                                <p className="text-[9px] font-bold text-gray-400">{item.retailer?.first_name} {item.retailer?.last_name} • Rice</p>
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase px-3 py-1 bg-blue-100 text-blue-700 rounded-full">{item.delivery_status}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-4">
                                 <h4 className="text-xs font-black uppercase text-gray-400">Past Palay Shipments</h4>

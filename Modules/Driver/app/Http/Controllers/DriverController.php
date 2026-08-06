@@ -46,7 +46,13 @@ class DriverController extends Controller
 
         $activeBookings = \App\Models\Booking::with(['bookable', 'harvestBatch.user', 'order.retailer'])
             ->where('driver_id', $driverId)
-            ->whereIn('status', ['assigned', 'at_pickup', 'in_transit', 'delivered'])
+            ->whereIn('status', ['assigned', 'at_pickup', 'in_transit'])
+            ->latest()
+            ->get();
+
+        $deliveredBookings = \App\Models\Booking::with(['harvestBatch.user', 'order.retailer'])
+            ->where('driver_id', $driverId)
+            ->where('status', 'delivered')
             ->latest()
             ->get();
 
@@ -56,6 +62,7 @@ class DriverController extends Controller
             'history' => $history,
             'pendingBookings' => $pendingBookings,
             'activeBookings' => $activeBookings,
+            'deliveredBookings' => $deliveredBookings,
         ]);
     }
 
@@ -77,6 +84,8 @@ class DriverController extends Controller
             'delivery_status' => 'Payment Pending',
             'status' => 'payment_pending',
         ]);
+
+        $batch->user?->notify(new \App\Notifications\WeightLoggedNotification($batch->id, $validated['actual_weight_kg'], $validated['suggested_price_per_kg']));
 
         return redirect()->back()->with('message', 'Weight logged! Waiting for Miller to authorize payment before starting transit.');
     }
@@ -172,6 +181,8 @@ class DriverController extends Controller
                 'status' => 'completed',
                 'updated_at' => now()
             ]);
+
+            \App\Models\Booking::where('order_id', $order->id)->update(['status' => 'delivered']);
 
             // Copy wallet logic from RetailerController to ensure funds move if driver signs off
             \App\Services\PaymentService::transfer(

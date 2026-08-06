@@ -40,4 +40,9 @@ class Order extends Model
     {
         return $this->belongsTo(User::class, 'miller_id');
     }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'driver_id');
+    }
 }

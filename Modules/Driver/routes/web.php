@@ -8,8 +8,6 @@ Route::middleware(['auth', 'verified', 'role:driver'])->group(function () {
     
     // Palay Actions (Farmer -> Miller)
     Route::post('/driver/palay/{id}/request-pickup', [DriverController::class, 'requestPickup'])->name('driver.palay.request_pickup');
-    Route::post('/driver/palay/{id}/start-trip', [DriverController::class, 'startPalayTrip'])->name('driver.palay.start_trip');
-    Route::post('/driver/palay/{id}/request-payment', [DriverController::class, 'requestPayment'])->name('driver.palay.request_payment');
     Route::post('/driver/palay/{id}/pay-farmer', [DriverController::class, 'payFarmer'])->name('driver.palay.pay_farmer');
     Route::post('/driver/palay/{id}/arrive-at-miller', [DriverController::class, 'arriveAtMiller'])->name('driver.palay.arrive_at_miller');
     

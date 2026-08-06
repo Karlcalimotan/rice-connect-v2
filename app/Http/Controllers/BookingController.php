@@ -17,7 +17,7 @@ class BookingController extends Controller
         $driverId = auth()->id();
 
         if (auth()->user()->role !== 'driver') {
-            return response()->json(['success' => false, 'message' => 'Only drivers can accept jobs.'], 403);
+            return redirect()->back()->withErrors('Only drivers can accept jobs.');
         }
 
         return DB::transaction(function () use ($bookingId, $driverId) {
@@ -25,7 +25,7 @@ class BookingController extends Controller
             $booking = Booking::where('id', $bookingId)->lockForUpdate()->first();
 
             if (!$booking || $booking->status !== BookingStatus::Pending->value) {
-                return response()->json(['success' => false, 'message' => 'Job taken or unavailable.'], 422);
+                return redirect()->back()->withErrors('Job taken or unavailable.');
             }
 
             $booking->update([
@@ -39,14 +39,16 @@ class BookingController extends Controller
                     'driver_id' => $driverId,
                     'delivery_status' => 'Pending'
                 ]);
+                $booking->harvestBatch->user?->notify(new \App\Notifications\DriverAssignedNotification($booking->harvestBatch, $driverId));
             } elseif ($booking->order_id && $booking->order) {
                 $booking->order->update([
                     'driver_id' => $driverId,
                     'delivery_status' => 'Pending'
                 ]);
+                $booking->order->retailer?->notify(new \App\Notifications\DriverAssignedNotification($booking->order, $driverId));
             }
 
-            return response()->json(['success' => true, 'message' => 'Job successfully claimed!']);
+            return redirect()->back()->with('message', 'Job successfully claimed!');
         });
     }
 
@@ -75,6 +77,14 @@ class BookingController extends Controller
             return redirect()->back()->withErrors("Cannot transition booking from {$booking->status} to {$newStatus}.");
         }
 
+        $isPalay = $booking->harvest_batch_id && $booking->harvestBatch;
+
+        // Money-gate for palay: transit cannot start until the driver has logged
+        // the weight/price and the Miller has authorized the payment.
+        if ($isPalay && $newStatus === BookingStatus::InTransit->value && $booking->harvestBatch->delivery_status !== 'Payment Authorized') {
+            return redirect()->back()->withErrors('Miller must authorize payment before transit can start.');
+        }
+
         $booking->update(['status' => $newStatus]);
 
         // Map booking status to corresponding shipment states
@@ -94,6 +104,7 @@ class BookingController extends Controller
                 $updateData['status'] = 'in_transit';
             } elseif ($newStatus === 'delivered') {
                 $updateData['status'] = 'received';
+                $updateData['delivery_status'] = 'Received';
             }
             $booking->harvestBatch->update($updateData);
         } elseif ($booking->order_id && $booking->order) {

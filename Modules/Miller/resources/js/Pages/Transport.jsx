@@ -156,6 +156,40 @@ export default function Transport({ auth, inbound, outbound, allDrivers, myFleet
                                             </div>
                                         )}
 
+                                        {batch.delivery_status === 'Received' && (
+                                            <div className="mt-6 p-4 glass-card !bg-emerald-50 border-4 border-black">
+                                                <p className="text-xs font-black uppercase mb-3 text-emerald-800">Finalize & Pay Farmer</p>
+                                                <div className="flex justify-between items-end mb-4 bg-white/40 backdrop-blur-sm p-4 border-2 border-black">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase text-gray-500">Driver Logged:</p>
+                                                        <p className="text-lg font-black">{batch.actual_weight_kg} kg @ ₱{batch.suggested_price_per_kg}/kg</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-black uppercase text-gray-500">Suggested Total:</p>
+                                                        <p className="text-lg font-black text-green-600">₱{((batch.actual_weight_kg || 0) * (batch.suggested_price_per_kg || 0)).toLocaleString()}</p>
+                                                    </div>
+                                                </div>
+                                                <label className="block text-[10px] font-black uppercase mb-1 text-emerald-900">Final Price (₱/kg)</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        className="flex-1 border-2 border-black p-2 font-black text-xs rounded-lg"
+                                                        placeholder={batch.suggested_price_per_kg ?? '0.00'}
+                                                        value={finalizeData.final_price_per_kg}
+                                                        onChange={e => setFinalizeData('final_price_per_kg', e.target.value)}
+                                                    />
+                                                    <button
+                                                        onClick={() => handleFinalizeTransaction(batch.id)}
+                                                        className="bg-green-600 text-white px-4 py-2 font-black text-[10px] uppercase rounded-lg hover:bg-green-700 transition-colors"
+                                                    >
+                                                        Finalize & Pay Farmer
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {batch.delivery_status === 'Pending' && (
                                             <div className="mt-6 space-y-4">
                                                 <div className="p-4 glass-card !bg-emerald-50 border-2 border-black">
@@ -188,7 +222,6 @@ export default function Transport({ auth, inbound, outbound, allDrivers, myFleet
                                                                 {myFleet?.map((d) => (
                                                                     <option key={d.id} value={d.id}>{d.first_name} {d.last_name} ({d.vehicle_type})</option>
                                                                 ))}
-                                                                <option value={auth.user.id}>Self (Miller)</option>
                                                             </select>
                                                             <button 
                                                                 onClick={() => handleAssignDriver(batch.id, 'palay')}

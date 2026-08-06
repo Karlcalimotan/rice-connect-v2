@@ -66,7 +66,7 @@ class MillerController extends Controller
     {
         $batches = HarvestBatch::with('user')
             ->where('buyer_id', auth()->id())
-            ->whereIn('status', ['pending', 'sold', 'in_transit'])
+            ->whereIn('status', ['pending', 'sold', 'accepted', 'in_transit'])
             ->latest()
             ->get();
 
@@ -216,6 +216,8 @@ class MillerController extends Controller
             );
         });
 
+        $batch->user?->notify(new \App\Notifications\PaymentPaidNotification($batch->id, $totalPayment));
+
         return redirect()->back()->with('message', 'Transaction finalized! Total Payment: ₱' . number_format($totalPayment, 2));
     }
 
@@ -245,6 +247,12 @@ class MillerController extends Controller
                 'driver_id' => $request->driver_id,
                 'status' => \App\Enums\BookingStatus::Assigned->value,
             ]);
+
+        if ($request->type === 'palay') {
+            $model->user?->notify(new \App\Notifications\DriverAssignedNotification($model, $request->driver_id));
+        } else {
+            $model->retailer?->notify(new \App\Notifications\DriverAssignedNotification($model, $request->driver_id));
+        }
 
         return redirect()->back()->with('message', 'Driver assigned successfully!');
     }

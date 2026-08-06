@@ -17,7 +17,7 @@ class FarmerController extends Controller
      */
     public function index(): Response
     {
-        $batches = HarvestBatch::with(['buyer', 'interests.miller', 'acceptedMiller'])
+        $batches = HarvestBatch::with(['buyer', 'interests.miller', 'acceptedMiller', 'driver'])
             ->where('user_id', Auth::id())
             ->where('hidden_from_farmer', false)
             ->latest()
