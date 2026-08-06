@@ -91,80 +91,6 @@ class DriverController extends Controller
     }
 
     /**
-     * Phase 2.5: Driver finalizes pickup after Miller authorization.
-     */
-    public function payFarmer($id)
-    {
-        $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
-
-        if ($batch->delivery_status !== 'Payment Authorized') {
-            return redirect()->back()->withErrors('Miller has not authorized payment yet.');
-        }
-
-        $batch->update([
-            'delivery_status' => 'In Transit',
-            'status' => 'in_transit',
-            'updated_at' => now(),
-        ]);
-
-        return redirect()->back()->with('message', 'Payment confirmed with Farmer. Starting transit to Miller station!');
-    }
-
-    /**
-     * Driver Phase 2: Confirm Loading & Start Trip for Rice Delivery
-     */
-    public function startRiceTrip(Request $request, $id)
-    {
-        $order = Order::where('driver_id', auth()->id())->findOrFail($id);
-
-        if ($order->delivery_status !== 'Pending') {
-            return redirect()->back()->withErrors('Trip already started or invalid status.');
-        }
-
-        $order->update([
-            'delivery_status' => 'In Transit',
-            'status' => 'in_transit',
-        ]);
-
-        return redirect()->back()->with('message', 'Trip started! Heading to retailer.');
-    }
-
-    /**
-     * Driver marks palay delivery as "Arrived at Miller Station".
-     */
-    public function arriveAtMiller(Request $request, $id)
-    {
-        $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
-
-        if ($batch->delivery_status !== 'In Transit') {
-            return redirect()->back()->withErrors('Batch must be in transit to mark as arrived.');
-        }
-
-        $batch->update([
-            'delivery_status' => 'Received',
-            'status' => 'received',
-            'updated_at' => now(),
-        ]);
-
-        return redirect()->back()->with('message', 'Delivery finalized! Batch is now at the Miller station.');
-    }
-
-    /**
-     * Driver marks rice delivery as "Arrived at Destination".
-     */
-    public function deliverRice(Request $request, $id)
-    {
-        $order = Order::where('driver_id', auth()->id())->findOrFail($id);
-
-        $order->update([
-            'delivery_status' => 'Delivered',
-            'status' => 'delivered', 
-        ]);
-
-        return redirect()->back()->with('message', 'Order marked as Delivered. Please have the Retailer sign off or use the final sign-off button.');
-    }
-
-    /**
      * Driver performs the final sign-off for a rice delivery.
      */
     public function finalSignOff(Request $request, $id)
@@ -208,21 +134,5 @@ class DriverController extends Controller
         });
 
         return redirect()->back()->with('message', 'Final sign-off complete! Delivery finalized.');
-    }
-
-    /**
-     * Clear driver assignment for completed history records.
-     */
-    public function deleteHistory($type, $id)
-    {
-        if ($type === 'palay') {
-            $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
-            $batch->update(['driver_id' => null]);
-        } elseif ($type === 'rice') {
-            $order = Order::where('driver_id', auth()->id())->findOrFail($id);
-            $order->update(['driver_id' => null]);
-        }
-
-        return redirect()->back()->with('message', 'Completed history record deleted.');
     }
 }

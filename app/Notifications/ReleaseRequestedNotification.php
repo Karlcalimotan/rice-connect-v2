@@ -27,6 +27,8 @@ class ReleaseRequestedNotification extends Notification
     {
         return [
             'message' => "Retailer " . $this->retailerName . " has placed a self-pickup order #" . $this->orderId . ". Ready for release.",
+            'title' => 'Release Requested',
+            'action_url' => route('miller.orders'),
             'type' => 'logistics',
             'id' => $this->orderId,
         ];

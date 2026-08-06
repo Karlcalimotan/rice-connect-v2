@@ -29,6 +29,8 @@ class WeightLoggedNotification extends Notification
     {
         return [
             'message' => 'Your palay was weighed: ' . $this->weightKg . ' kg @ ₱' . $this->pricePerKg . '/kg. Awaiting Miller payment authorization.',
+            'title' => 'Palay Weighed',
+            'action_url' => route('farmer.harvest'),
             'type' => 'logistics',
             'weight_kg' => $this->weightKg,
             'price_per_kg' => $this->pricePerKg,

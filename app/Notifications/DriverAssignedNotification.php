@@ -37,9 +37,12 @@ class DriverAssignedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         $kind = $this->shipment instanceof \Modules\Farmer\Models\HarvestBatch ? 'palay' : 'rice';
+        $actionUrl = $this->shipment instanceof \Modules\Farmer\Models\HarvestBatch ? route('farmer.harvest') : route('retailer.orders');
 
         return [
             'message' => $this->driverName . " has been assigned to your " . $kind . " delivery (Ref #" . $this->entityId . ").",
+            'title' => 'Driver Assigned',
+            'action_url' => $actionUrl,
             'type' => 'logistics',
             'driver_name' => $this->driverName,
             'id' => $this->entityId,

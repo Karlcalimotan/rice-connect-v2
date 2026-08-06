@@ -27,6 +27,8 @@ class PaymentPaidNotification extends Notification
     {
         return [
             'message' => 'Payment received! ₱' . number_format($this->amount, 2) . ' has been credited to your wallet (Ref #' . $this->entityId . ').',
+            'title' => 'Payment Received',
+            'action_url' => route('farmer.harvest'),
             'type' => 'payment',
             'amount' => $this->amount,
             'id' => $this->entityId,

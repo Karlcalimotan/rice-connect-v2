@@ -142,17 +142,21 @@ class MillerAnalyticsController extends Controller
 
         $pending = MillingQueue::where('miller_id', $miller->id)
             ->where('status', 'pending')
-            ->selectRaw('
-                id,
-                palay_kg,
-                priority,
-                queued_at,
-                TIMESTAMPDIFF(HOUR, queued_at, NOW()) as hours_waiting
-            ')
             ->orderBy('priority', 'asc')
             ->orderBy('queued_at', 'asc')
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'palay_kg' => $item->palay_kg,
+                    'priority' => $item->priority,
+                    'queued_at' => $item->queued_at,
+                    'hours_waiting' => $item->queued_at
+                        ? max(0, (int) now()->diffInHours(\Illuminate\Support\Carbon::parse($item->queued_at)))
+                        : 0,
+                ];
+            });
 
         return response()->json([
             'status' => 'success',
@@ -190,7 +194,7 @@ class MillerAnalyticsController extends Controller
             'status' => 'success',
             'data' => [
                 'total_processed_kg' => $totalProcessed,
-                'avg_recovery_rate' => round($avgRecovery, 2),
+                'avg_recovery_rate' => round($avgRecovery ?? 0, 2),
                 'queued_batches' => $queuedBatches,
             ],
         ]);

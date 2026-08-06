@@ -79,13 +79,19 @@ class FarmerAnalyticsController extends Controller
     public function marketPrices(): JsonResponse
     {
         $farmer = Auth::user();
-        
-        // Get latest prices for each variety in farmer's region
-        $data = MarketPrice::where('market_region', $farmer->municipality)
-            ->selectRaw('rice_variety, price_per_kg, price_date')
+
+        $region = $farmer->getAttribute('municipality') ?: $farmer->municipality?->name;
+
+        // Get latest prices for each variety (region-scoped when known)
+        $query = MarketPrice::selectRaw('rice_variety, price_per_kg, price_date')
             ->where('price_date', '>=', now()->subDays(30))
-            ->orderBy('price_date', 'desc')
-            ->get()
+            ->orderBy('price_date', 'desc');
+
+        if ($region) {
+            $query->where('market_region', $region);
+        }
+
+        $data = $query->get()
             ->groupBy('rice_variety')
             ->map(function ($prices) {
                 $priceValues = $prices->pluck('price_per_kg')->toArray();
@@ -126,7 +132,7 @@ class FarmerAnalyticsController extends Controller
             'status' => 'success',
             'data' => [
                 'total_yield_kg' => $totalYield,
-                'avg_crop_health' => round($avgHealth, 2),
+                'avg_crop_health' => round($avgHealth ?? 0, 2),
                 'varieties_grown' => $varietyCount,
             ],
         ]);

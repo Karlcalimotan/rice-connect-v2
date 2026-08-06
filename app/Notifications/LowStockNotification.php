@@ -45,6 +45,8 @@ class LowStockNotification extends Notification
         return [
             'type' => 'low_stock',
             'message' => "Low stock alert for {$this->riceVariety}. Only {$this->remainingSacks} sacks remaining.",
+            'title' => 'Low Stock Alert',
+            'action_url' => route('miller.inventory'),
             'stock_id' => $this->stockId,
             'remaining_sacks' => $this->remainingSacks,
             'rice_variety' => $this->riceVariety,

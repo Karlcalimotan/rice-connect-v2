@@ -33,6 +33,8 @@ class BookingAssignedNotification extends Notification
             'message' => $isDriver
                 ? $this->retailerName . " booked you for Rice Order #" . $this->orderId . "."
                 : $this->retailerName . " booked " . $this->driverName . " for Rice Order #" . $this->orderId . ".",
+            'title' => 'Driver Booked',
+            'action_url' => $isDriver ? route('driver.dashboard') : route('miller.orders'),
             'type' => 'logistics',
             'driver_name' => $this->driverName,
             'retailer_name' => $this->retailerName,
