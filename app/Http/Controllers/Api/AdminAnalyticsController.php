@@ -92,14 +92,14 @@ class AdminAnalyticsController extends Controller
      */
     public function regionalsBottlenecks(): JsonResponse
     {
-        $bottlenecks = RegionalDistributionLog::selectRaw('
+        $bottlenecks = RegionalDistributionLog::selectRaw("
             destination_region as region,
             COUNT(*) as shipment_count,
             AVG(delay_hours) as avg_delay,
             MAX(delay_hours) as max_delay,
-            SUM(CASE WHEN status = "delayed" THEN 1 ELSE 0 END) as delayed_count,
+            SUM(CASE WHEN status = 'delayed' THEN 1 ELSE 0 END) as delayed_count,
             SUM(volume_kg) as total_volume
-        ')
+        ")
             ->where('shipped_date', '>=', now()->subDays(90))
             ->groupBy('destination_region')
             ->orderBy('avg_delay', 'desc')
@@ -135,13 +135,13 @@ class AdminAnalyticsController extends Controller
      */
     public function deliveryPerformance(): JsonResponse
     {
-        $performance = RegionalDistributionLog::selectRaw('
+        $performance = RegionalDistributionLog::selectRaw("
             DATE(shipped_date) as date,
-            SUM(CASE WHEN status = "delivered" THEN 1 ELSE 0 END) as delivered,
-            SUM(CASE WHEN status = "in_transit" THEN 1 ELSE 0 END) as in_transit,
+            SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered,
+            SUM(CASE WHEN status = 'in_transit' THEN 1 ELSE 0 END) as in_transit,
             COUNT(*) as total,
             AVG(delay_hours) as avg_delay
-        ')
+        ")
             ->where('shipped_date', '>=', now()->subDays(60))
             ->groupBy('date')
             ->orderBy('date', 'asc')

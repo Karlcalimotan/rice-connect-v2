@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Schema;
  * per referenced business object (HarvestBatch/Order).
  *
  * CHECK constraints cannot be added via ALTER TABLE on SQLite, so the stronger
- * checks are applied on MySQL only (production). SQLite dev/CI keeps the
- * index-level guarantee and relies on PaymentService for the rest.
+ * checks are applied on MySQL and PostgreSQL (production). SQLite dev/CI keeps
+ * the index-level guarantee and relies on PaymentService for the rest.
  */
 return new class extends Migration
 {
@@ -28,11 +28,21 @@ return new class extends Migration
             DB::statement('ALTER TABLE ledger_entries ADD CONSTRAINT ledger_entries_amount_positive CHECK (amount > 0)');
             DB::statement('ALTER TABLE bookings ADD CONSTRAINT bookings_weights_non_negative CHECK (total_weight_kg >= 0 AND estimated_sacks >= 0)');
         }
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE ledger_entries ADD CONSTRAINT ledger_entries_amount_positive CHECK (amount > 0)');
+            DB::statement('ALTER TABLE bookings ADD CONSTRAINT bookings_weights_non_negative CHECK (total_weight_kg >= 0 AND estimated_sacks >= 0)');
+        }
     }
 
     public function down(): void
     {
         if (DB::connection()->getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE bookings DROP CONSTRAINT bookings_weights_non_negative');
+            DB::statement('ALTER TABLE ledger_entries DROP CONSTRAINT ledger_entries_amount_positive');
+        }
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
             DB::statement('ALTER TABLE bookings DROP CONSTRAINT bookings_weights_non_negative');
             DB::statement('ALTER TABLE ledger_entries DROP CONSTRAINT ledger_entries_amount_positive');
         }

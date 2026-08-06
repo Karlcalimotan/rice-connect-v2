@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+vendor
+node_modules
+public/build
+public/hot
+database/database.sqlite
+storage/logs/*
+composer.phar
+Dockerfile
+.dockerignore
+render.yaml
+compose.yaml
+docker-compose*.yml
