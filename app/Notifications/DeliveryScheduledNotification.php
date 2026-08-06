@@ -36,6 +36,8 @@ class DeliveryScheduledNotification extends Notification
         if ($method === 'pickup') {
             return [
                 'message' => "Your rice order pickup is scheduled for " . $this->date . ".",
+                'title' => 'Pickup Scheduled',
+                'action_url' => route('retailer.orders'),
                 'type' => 'logistics',
                 'date' => $this->date,
                 'id' => $this->entityId,
@@ -44,6 +46,8 @@ class DeliveryScheduledNotification extends Notification
 
         return [
             'message' => "Your rice delivery is scheduled for " . $this->date . ". Please prepare storage.",
+            'title' => 'Delivery Scheduled',
+            'action_url' => route('retailer.orders'),
             'type' => 'logistics',
             'date' => $this->date,
             'id' => $this->entityId,

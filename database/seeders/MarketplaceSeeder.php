@@ -68,37 +68,47 @@ class MarketplaceSeeder extends Seeder
         }
 
         // 3. Create Batches for Miller Inventory (Received/Processing)
-        HarvestBatch::create([
-            'user_id' => $farmer->id,
-            'buyer_id' => $miller->id,
-            'accepted_miller_id' => $miller->id,
-            'rice_variety' => 'RC160',
-            'number_of_bags' => 50,
-            'total_weight' => 2500,
-            'harvest_date' => now()->subDays(15)->toDateString(),
-            'status' => 'received',
-            'drying_status' => 'received',
-            'condition' => 'fresh',
-            'location' => 'Zarraga, Iloilo',
-            'delivery_status' => 'Received',
-            'total_sacks' => 50,
-        ]);
+        //    Guarded so re-seeding never creates duplicate received batches, which
+        //    would otherwise generate phantom payment pairs in FinancialLedgerSeeder.
+        $hasInventoryBatch = HarvestBatch::where('user_id', $farmer->id)
+            ->whereNotNull('buyer_id')
+            ->exists();
 
-        HarvestBatch::create([
-            'user_id' => $farmer->id,
-            'buyer_id' => $miller->id,
-            'accepted_miller_id' => $miller->id,
-            'rice_variety' => 'Dinorado',
-            'number_of_bags' => 30,
-            'total_weight' => 1500,
-            'harvest_date' => now()->subDays(20)->toDateString(),
-            'status' => 'processing',
-            'drying_status' => 'ready_to_process',
-            'condition' => 'fresh',
-            'location' => 'Santa Barbara, Iloilo',
-            'delivery_status' => 'Received',
-            'total_sacks' => 30,
-        ]);
+        if (!$hasInventoryBatch) {
+            HarvestBatch::create([
+                'user_id' => $farmer->id,
+                'buyer_id' => $miller->id,
+                'accepted_miller_id' => $miller->id,
+                'rice_variety' => 'RC160',
+                'number_of_bags' => 50,
+                'total_weight' => 2500,
+                'harvest_date' => now()->subDays(15)->toDateString(),
+                'status' => 'received',
+                'drying_status' => 'received',
+                'condition' => 'fresh',
+                'location' => 'Zarraga, Iloilo',
+                'delivery_status' => 'Received',
+                'total_sacks' => 50,
+                'actual_weight_kg' => 2500,
+                'final_price_per_kg' => 20,
+            ]);
+
+            HarvestBatch::create([
+                'user_id' => $farmer->id,
+                'buyer_id' => $miller->id,
+                'accepted_miller_id' => $miller->id,
+                'rice_variety' => 'Dinorado',
+                'number_of_bags' => 30,
+                'total_weight' => 1500,
+                'harvest_date' => now()->subDays(20)->toDateString(),
+                'status' => 'processing',
+                'drying_status' => 'ready_to_process',
+                'condition' => 'fresh',
+                'location' => 'Santa Barbara, Iloilo',
+                'delivery_status' => 'Received',
+                'total_sacks' => 30,
+            ]);
+        }
 
         // 4. Create Finished Rice Stock for Retailer Marketplace
         FinishedRiceStock::updateOrCreate(

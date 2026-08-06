@@ -50,6 +50,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     // Unified Analytics Data API (Web-accessible for Inertia)
     Route::get('/api/analytics/data', [\App\Http\Controllers\AnalyticsController::class, 'getData'])->name('api.analytics.data');
+
+    // Booking / Grab matching engine routes
+    Route::post('/bookings/{id}/accept', [\App\Http\Controllers\BookingController::class, 'acceptJob'])->name('bookings.accept');
+    Route::post('/bookings/{id}/status', [\App\Http\Controllers\BookingController::class, 'updateStatus'])->name('bookings.update_status');
 });
 
 require __DIR__.'/auth.php';

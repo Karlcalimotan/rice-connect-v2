@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ConsumerDemandHeatmap extends Model
 {
+    protected $table = 'consumer_demand_heatmap';
+
     protected $fillable = [
         'retailer_id',
         'rice_variety',

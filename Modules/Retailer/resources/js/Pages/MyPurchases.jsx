@@ -1,9 +1,24 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import DeliveryStatusStepper from '@/Components/DeliveryStatusStepper';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function MyPurchases({ auth, orders, design_css_url }) {
+    const [driversByOrder, setDriversByOrder] = useState({});
+    const [selectedDrivers, setSelectedDrivers] = useState({});
+
+    const loadDrivers = (orderId) => {
+        if (driversByOrder[orderId]) return;
+        fetch(route('retailer.order.drivers', orderId), { headers: { Accept: 'application/json' } })
+            .then((r) => r.json())
+            .then((data) => setDriversByOrder((prev) => ({ ...prev, [orderId]: data.drivers || [] })));
+    };
+
+    const handleBookDriver = (orderId) => {
+        router.post(route('retailer.order.book_driver', orderId), {
+            driver_id: selectedDrivers[orderId],
+        });
+    };
 
     const badgeConfig = (status, delivery_status) => {
         if (delivery_status === 'Confirmed Received') return { bg: 'bg-green-600 text-white', label: '✅ Order Completed' };
@@ -103,6 +118,64 @@ export default function MyPurchases({ auth, orders, design_css_url }) {
                                                 type={order.shipping_method === 'pickup' ? 'rice_pickup' : 'rice'} 
                                             />
                                             
+                                            {order.shipping_method === 'delivery' && (
+                                                <div className="mt-8 p-5 rounded-2xl bg-white/90 border-2 border-black">
+                                                    {order.driver ? (
+                                                        <div className="flex justify-between items-center">
+                                                            <div>
+                                                                <p className="text-[9px] font-black uppercase text-emerald-950/40 tracking-[0.2em]">Your Driver</p>
+                                                                <p className="font-extrabold text-emerald-950">{order.driver.first_name} {order.driver.last_name}</p>
+                                                                {order.driver.vehicle_type && <p className="text-xs font-bold text-gray-500">{order.driver.vehicle_type}</p>}
+                                                            </div>
+                                                            <span className="text-[9px] font-black uppercase px-3 py-1 bg-amber-100 text-amber-700 border border-amber-300 rounded-full">
+                                                                Booked
+                                                            </span>
+                                                        </div>
+                                                    ) : order.delivery_status === 'Pending' ? (
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase mb-3 text-emerald-950/60">🚚 Book a Driver for Your Delivery</p>
+                                                            {!driversByOrder[order.id] && (
+                                                                <button
+                                                                    onClick={() => loadDrivers(order.id)}
+                                                                    className="mb-3 text-[10px] font-black uppercase text-emerald-700 underline"
+                                                                >
+                                                                    Load available drivers
+                                                                </button>
+                                                            )}
+                                                            {driversByOrder[order.id] && driversByOrder[order.id].length === 0 && (
+                                                                <p className="text-[10px] font-black uppercase text-gray-400 mb-2">No verified drivers available right now. Your order is still open for drivers to accept.</p>
+                                                            )}
+                                                            {driversByOrder[order.id] && driversByOrder[order.id].length > 0 && (
+                                                                <>
+                                                                    <div className="flex gap-2">
+                                                                        <select
+                                                                            className="flex-1 border-2 border-black p-2 font-black text-sm rounded-lg"
+                                                                            value={selectedDrivers[order.id] || ''}
+                                                                            onChange={(e) => setSelectedDrivers((prev) => ({ ...prev, [order.id]: e.target.value }))}
+                                                                        >
+                                                                            <option value="">Select a driver...</option>
+                                                                            {driversByOrder[order.id].map((d) => (
+                                                                                <option key={d.id} value={d.id}>{d.first_name} {d.last_name} ({d.vehicle_type})</option>
+                                                                            ))}
+                                                                        </select>
+                                                                        <button
+                                                                            disabled={!selectedDrivers[order.id]}
+                                                                            onClick={() => handleBookDriver(order.id)}
+                                                                            className={`px-5 py-2 font-black uppercase text-[10px] tracking-widest rounded-lg ${selectedDrivers[order.id] ? 'bg-emerald-950 text-white hover:bg-emerald-800' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                                                                        >
+                                                                            Book
+                                                                        </button>
+                                                                    </div>
+                                                                    <p className="text-[9px] font-bold text-gray-400 mt-2">Prefer to wait? A driver can still accept this job from the network.</p>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-[10px] font-black uppercase text-gray-400">Driver assignment no longer available.</p>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             {order.delivery_status === 'Delivered' && (
                                                 <div className="mt-12 flex justify-center">
                                                     <button 

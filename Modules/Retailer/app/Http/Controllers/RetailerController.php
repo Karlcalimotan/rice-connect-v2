@@ -61,13 +61,15 @@ class RetailerController extends Controller
 
         $totalPrice = ($requestedSacks * $pricePerSack) + $deliveryCharge;
 
-        DB::transaction(function () use ($request, $batch, $requestedSacks, $deliveryCharge, $totalPrice) {
+        $order = null;
+
+        DB::transaction(function () use ($request, $batch, $requestedSacks, $deliveryCharge, $totalPrice, &$order) {
             $decrementKg = $requestedSacks * 50;
 
             $batch->decrement('total_sacks', $requestedSacks);
             $batch->decrement('unpacked_weight_kg', $decrementKg);
 
-            \App\Models\Order::create([
+            $order = \App\Models\Order::create([
                 'retailer_id' => auth()->id(),
                 'miller_id' => $batch->miller_id,
                 'stock_id' => $batch->id,
@@ -76,10 +78,11 @@ class RetailerController extends Controller
                 'total_weight' => $decrementKg,
                 'total_price' => $totalPrice,
                 'shipping_method' => $request->shipping_method,
+                'fulfillment_type' => $request->shipping_method, // enum: ['pickup', 'delivery']
                 'delivery_fee' => $deliveryCharge,
                 'delivery_status' => 'Pending',
                 'delivery_type' => 'rice',
-                'status' => 'pending_preparation',
+                'status' => $request->shipping_method === 'pickup' ? 'ready_for_pickup' : 'pending_preparation',
             ]);
 
             // Threshold Check: Notify miller if stock is low
@@ -91,12 +94,26 @@ class RetailerController extends Controller
             }
         });
 
+        if ($order) {
+            if ($request->shipping_method === 'delivery') {
+                \App\Services\BookingBroadcastService::broadcastRiceDelivery($order);
+            } else {
+                // Send a release notification directly to the Miller
+                $miller = \App\Models\User::find($order->miller_id);
+                if ($miller) {
+                    $retailerName = auth()->user()->first_name . ' ' . auth()->user()->last_name;
+                    $miller->notify(new \App\Notifications\ReleaseRequestedNotification($order->id, $retailerName));
+                }
+            }
+        }
+
         return redirect()->route('retailer.purchases')->with('message', 'Order placed successfully!');
     }
 
     public function myOrders(): Response
     {
-        $orders = \App\Models\Order::where('retailer_id', auth()->id())
+        $orders = \App\Models\Order::with(['miller', 'driver'])
+            ->where('retailer_id', auth()->id())
             ->latest()
             ->get();
 
@@ -108,7 +125,7 @@ class RetailerController extends Controller
 
     public function myPurchases(): Response
     {
-        $orders = \App\Models\Order::with('miller')
+        $orders = \App\Models\Order::with(['miller', 'driver'])
             ->where('retailer_id', auth()->id())
             ->latest()
             ->get();
@@ -117,6 +134,77 @@ class RetailerController extends Controller
             'orders' => $orders,
             'design_css_url' => '/design/rice-connect-dashboard/styles.css',
         ]);
+    }
+
+    /**
+     * List verified drivers a retailer can book for a pending delivery order.
+     */
+    public function drivers($id)
+    {
+        $order = \App\Models\Order::where('retailer_id', auth()->id())->findOrFail($id);
+
+        if ($order->shipping_method !== 'delivery' || $order->delivery_status !== 'Pending' || $order->driver_id) {
+            return response()->json(['drivers' => []]);
+        }
+
+        $drivers = \App\Models\User::where('role', 'driver')
+            ->where('is_verified_driver', true)
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name', 'vehicle_type']);
+
+        return response()->json(['drivers' => $drivers]);
+    }
+
+    /**
+     * Retailer explicitly books a driver for their pending delivery order.
+     */
+    public function bookDriver(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'driver_id' => 'required|exists:users,id',
+        ]);
+
+        $order = \App\Models\Order::where('retailer_id', auth()->id())->findOrFail($id);
+
+        if ($order->shipping_method !== 'delivery') {
+            return redirect()->back()->withErrors('This order is not a delivery order.');
+        }
+
+        if ($order->delivery_status !== 'Pending') {
+            return redirect()->back()->withErrors('A driver can only be booked while the order is still pending.');
+        }
+
+        if ($order->driver_id) {
+            return redirect()->back()->withErrors('A driver is already assigned to this order.');
+        }
+
+        $driver = \App\Models\User::where('role', 'driver')
+            ->where('is_verified_driver', true)
+            ->find($validated['driver_id']);
+
+        if (!$driver) {
+            return redirect()->back()->withErrors('That driver is not available.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($order, $driver) {
+            $order->update([
+                'driver_id' => $driver->id,
+                'delivery_status' => 'Pending',
+            ]);
+
+            // Withdraw the pending pool booking and assign it to the chosen driver.
+            \App\Models\Booking::where('order_id', $order->id)
+                ->where('status', \App\Enums\BookingStatus::Pending->value)
+                ->update([
+                    'driver_id' => $driver->id,
+                    'status' => \App\Enums\BookingStatus::Assigned->value,
+                ]);
+
+            $driver->notify(new \App\Notifications\BookingAssignedNotification($order));
+            $order->miller?->notify(new \App\Notifications\BookingAssignedNotification($order));
+        });
+
+        return redirect()->back()->with('message', $driver->first_name . ' ' . $driver->last_name . ' has been booked for your delivery.');
     }
 
     /**
@@ -138,53 +226,26 @@ class RetailerController extends Controller
                 'updated_at' => now()
             ]);
 
-            $retailerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
-            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->miller_id]);
+            \App\Models\Booking::where('order_id', $order->id)->update(['status' => 'delivered']);
 
-            $retailerWallet->debit($order->total_price);
-            $millerWallet->credit($order->total_price);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => auth()->id(),
-                'amount' => $order->total_price,
-                'type' => 'debit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment for Rice Order #' . $order->id
-            ]);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => $order->miller_id,
-                'amount' => $order->total_price,
-                'type' => 'credit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment received for Rice Order #' . $order->id
-            ]);
+            \App\Services\PaymentService::transfer(
+                auth()->id(),
+                $order->miller_id,
+                $order->total_price,
+                'Payment for Rice Order #' . $order->id,
+                'Payment received for Rice Order #' . $order->id,
+                $order
+            );
 
             if ($order->driver_id && $order->delivery_fee > 0) {
-                $driverWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->driver_id]);
-                
-                $millerWallet->debit($order->delivery_fee);
-                $driverWallet->credit($order->delivery_fee);
-
-                \App\Models\LedgerEntry::create([
-                    'user_id' => $order->miller_id,
-                    'amount' => $order->delivery_fee,
-                    'type' => 'debit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Delivery fee payout for Order #' . $order->id
-                ]);
-
-                \App\Models\LedgerEntry::create([
-                    'user_id' => $order->driver_id,
-                    'amount' => $order->delivery_fee,
-                    'type' => 'credit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Commission received for Order #' . $order->id
-                ]);
+                \App\Services\PaymentService::transfer(
+                    $order->miller_id,
+                    $order->driver_id,
+                    $order->delivery_fee,
+                    'Delivery fee payout for Order #' . $order->id,
+                    'Commission received for Order #' . $order->id,
+                    $order
+                );
             }
         });
 

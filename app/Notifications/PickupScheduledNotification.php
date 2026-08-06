@@ -32,6 +32,8 @@ class PickupScheduledNotification extends Notification
     {
         return [
             'message' => "Your palay pick-up is scheduled for " . $this->date . ".",
+            'title' => 'Pickup Scheduled',
+            'action_url' => route('farmer.harvest'),
             'type' => 'logistics',
             'date' => $this->date,
             'id' => $this->entityId,

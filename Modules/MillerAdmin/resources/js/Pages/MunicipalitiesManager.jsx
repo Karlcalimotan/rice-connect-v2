@@ -13,14 +13,14 @@ export default function MunicipalitiesManager({ auth, municipalities }) {
     const submit = (e) => {
         e.preventDefault();
         if (editingId) {
-            patch(route('milleradmin.municipalities.update', editingId), {
+            patch(route('admin.municipalities.update', editingId), {
                 onSuccess: () => {
                     setEditingId(null);
                     reset();
                 }
             });
         } else {
-            post(route('milleradmin.municipalities.store'), {
+            post(route('admin.municipalities.store'), {
                 onSuccess: () => reset()
             });
         }
@@ -135,7 +135,7 @@ export default function MunicipalitiesManager({ auth, municipalities }) {
                                                 <button 
                                                     onClick={() => {
                                                         if(confirm('Delete this municipality? This will fail if users are assigned to it.')) {
-                                                            destroy(route('milleradmin.municipalities.destroy', m.id));
+                                                            destroy(route('admin.municipalities.destroy', m.id));
                                                         }
                                                     }}
                                                     aria-label={`Delete ${m.name}`}

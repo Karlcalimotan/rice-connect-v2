@@ -34,6 +34,8 @@ export default function AdminAnalyticsDashboard() {
         high: '#f59e0b',
         medium: '#eab308',
         low: '#22c55e',
+        warning: '#f59e0b',
+        healthy: '#22c55e',
     };
 
     return (

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MillerStorageCapacity extends Model
 {
+    protected $table = 'miller_storage_capacity';
+
     protected $fillable = [
         'user_id',
         'total_capacity_kg',

@@ -38,10 +38,31 @@ class DriverController extends Controller
             'rice' => Order::where('driver_id', $driverId)->whereIn('delivery_status', ['Confirmed Received', 'Completed'])->latest()->limit(10)->get(),
         ];
 
+        // 4. Grab-style Broadcast system bookings
+        $pendingBookings = \App\Models\Booking::with('bookable')
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        $activeBookings = \App\Models\Booking::with(['bookable', 'harvestBatch.user', 'order.retailer'])
+            ->where('driver_id', $driverId)
+            ->whereIn('status', ['assigned', 'at_pickup', 'in_transit'])
+            ->latest()
+            ->get();
+
+        $deliveredBookings = \App\Models\Booking::with(['harvestBatch.user', 'order.retailer'])
+            ->where('driver_id', $driverId)
+            ->where('status', 'delivered')
+            ->latest()
+            ->get();
+
         return Inertia::render('Driver::Dashboard', [
             'palayAssignments' => $palayAssignments,
             'riceAssignments' => $riceAssignments,
             'history' => $history,
+            'pendingBookings' => $pendingBookings,
+            'activeBookings' => $activeBookings,
+            'deliveredBookings' => $deliveredBookings,
         ]);
     }
 
@@ -64,81 +85,9 @@ class DriverController extends Controller
             'status' => 'payment_pending',
         ]);
 
+        $batch->user?->notify(new \App\Notifications\WeightLoggedNotification($batch->id, $validated['actual_weight_kg'], $validated['suggested_price_per_kg']));
+
         return redirect()->back()->with('message', 'Weight logged! Waiting for Miller to authorize payment before starting transit.');
-    }
-
-    /**
-     * Phase 2.5: Driver finalizes pickup after Miller authorization.
-     */
-    public function payFarmer($id)
-    {
-        $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
-
-        if ($batch->delivery_status !== 'Payment Authorized') {
-            return redirect()->back()->withErrors('Miller has not authorized payment yet.');
-        }
-
-        $batch->update([
-            'delivery_status' => 'In Transit',
-            'status' => 'in_transit',
-            'updated_at' => now(),
-        ]);
-
-        return redirect()->back()->with('message', 'Payment confirmed with Farmer. Starting transit to Miller station!');
-    }
-
-    /**
-     * Driver Phase 2: Confirm Loading & Start Trip for Rice Delivery
-     */
-    public function startRiceTrip(Request $request, $id)
-    {
-        $order = Order::where('driver_id', auth()->id())->findOrFail($id);
-
-        if ($order->delivery_status !== 'Pending') {
-            return redirect()->back()->withErrors('Trip already started or invalid status.');
-        }
-
-        $order->update([
-            'delivery_status' => 'In Transit',
-            'status' => 'in_transit',
-        ]);
-
-        return redirect()->back()->with('message', 'Trip started! Heading to retailer.');
-    }
-
-    /**
-     * Driver marks palay delivery as "Arrived at Miller Station".
-     */
-    public function arriveAtMiller(Request $request, $id)
-    {
-        $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
-
-        if ($batch->delivery_status !== 'In Transit') {
-            return redirect()->back()->withErrors('Batch must be in transit to mark as arrived.');
-        }
-
-        $batch->update([
-            'delivery_status' => 'Received',
-            'status' => 'received',
-            'updated_at' => now(),
-        ]);
-
-        return redirect()->back()->with('message', 'Delivery finalized! Batch is now at the Miller station.');
-    }
-
-    /**
-     * Driver marks rice delivery as "Arrived at Destination".
-     */
-    public function deliverRice(Request $request, $id)
-    {
-        $order = Order::where('driver_id', auth()->id())->findOrFail($id);
-
-        $order->update([
-            'delivery_status' => 'Delivered',
-            'status' => 'delivered', 
-        ]);
-
-        return redirect()->back()->with('message', 'Order marked as Delivered. Please have the Retailer sign off or use the final sign-off button.');
     }
 
     /**
@@ -159,73 +108,31 @@ class DriverController extends Controller
                 'updated_at' => now()
             ]);
 
+            \App\Models\Booking::where('order_id', $order->id)->update(['status' => 'delivered']);
+
             // Copy wallet logic from RetailerController to ensure funds move if driver signs off
-            $retailerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->retailer_id]);
-            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->miller_id]);
-
-            $retailerWallet->debit($order->total_price);
-            $millerWallet->credit($order->total_price);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => $order->retailer_id,
-                'amount' => $order->total_price,
-                'type' => 'debit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment for Rice Order #' . $order->id . ' (Signed off by Driver)'
-            ]);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => $order->miller_id,
-                'amount' => $order->total_price,
-                'type' => 'credit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment received for Rice Order #' . $order->id . ' (Signed off by Driver)'
-            ]);
+            \App\Services\PaymentService::transfer(
+                $order->retailer_id,
+                $order->miller_id,
+                $order->total_price,
+                'Payment for Rice Order #' . $order->id . ' (Signed off by Driver)',
+                'Payment received for Rice Order #' . $order->id . ' (Signed off by Driver)',
+                $order
+            );
 
             // Driver commission
             if ($order->delivery_fee > 0) {
-                $driverWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
-                $millerWallet->debit($order->delivery_fee);
-                $driverWallet->credit($order->delivery_fee);
-
-                \App\Models\LedgerEntry::create([
-                    'user_id' => $order->miller_id,
-                    'amount' => $order->delivery_fee,
-                    'type' => 'debit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Delivery fee payout for Order #' . $order->id
-                ]);
-
-                \App\Models\LedgerEntry::create([
-                    'user_id' => auth()->id(),
-                    'amount' => $order->delivery_fee,
-                    'type' => 'credit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Commission received for Order #' . $order->id
-                ]);
+                \App\Services\PaymentService::transfer(
+                    $order->miller_id,
+                    auth()->id(),
+                    $order->delivery_fee,
+                    'Delivery fee payout for Order #' . $order->id,
+                    'Commission received for Order #' . $order->id,
+                    $order
+                );
             }
         });
 
         return redirect()->back()->with('message', 'Final sign-off complete! Delivery finalized.');
-    }
-
-    /**
-     * Clear driver assignment for completed history records.
-     */
-    public function deleteHistory($type, $id)
-    {
-        if ($type === 'palay') {
-            $batch = HarvestBatch::where('driver_id', auth()->id())->findOrFail($id);
-            $batch->update(['driver_id' => null]);
-        } elseif ($type === 'rice') {
-            $order = Order::where('driver_id', auth()->id())->findOrFail($id);
-            $order->update(['driver_id' => null]);
-        }
-
-        return redirect()->back()->with('message', 'Completed history record deleted.');
     }
 }

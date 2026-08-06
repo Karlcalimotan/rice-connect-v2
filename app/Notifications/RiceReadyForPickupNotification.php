@@ -25,6 +25,8 @@ class RiceReadyForPickupNotification extends Notification
     {
         return [
             'message' => "Your rice order #" . $this->orderId . " is ready for pickup! Please proceed to the Miller station.",
+            'title' => 'Ready for Pickup',
+            'action_url' => route('retailer.orders'),
             'type' => 'logistics',
             'id' => $this->orderId,
         ];

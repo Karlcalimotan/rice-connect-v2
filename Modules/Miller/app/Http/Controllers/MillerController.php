@@ -66,7 +66,7 @@ class MillerController extends Controller
     {
         $batches = HarvestBatch::with('user')
             ->where('buyer_id', auth()->id())
-            ->whereIn('status', ['pending', 'sold', 'in_transit'])
+            ->whereIn('status', ['pending', 'sold', 'accepted', 'in_transit'])
             ->latest()
             ->get();
 
@@ -204,30 +204,19 @@ class MillerController extends Controller
                 'drying_status' => 'received',
             ]);
 
-            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
-            $farmerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $batch->user_id]);
+            \App\Models\Booking::where('harvest_batch_id', $batch->id)->update(['status' => 'delivered']);
 
-            $millerWallet->debit($totalPayment);
-            $farmerWallet->credit($totalPayment);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => auth()->id(),
-                'amount' => $totalPayment,
-                'type' => 'debit',
-                'reference_type' => get_class($batch),
-                'reference_id' => $batch->id,
-                'description' => 'Payment for Harvest Batch #' . $batch->id
-            ]);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => $batch->user_id,
-                'amount' => $totalPayment,
-                'type' => 'credit',
-                'reference_type' => get_class($batch),
-                'reference_id' => $batch->id,
-                'description' => 'Payment received for Harvest Batch #' . $batch->id
-            ]);
+            \App\Services\PaymentService::transfer(
+                auth()->id(),
+                $batch->user_id,
+                $totalPayment,
+                'Payment for Harvest Batch #' . $batch->id,
+                'Payment received for Harvest Batch #' . $batch->id,
+                $batch
+            );
         });
+
+        $batch->user?->notify(new \App\Notifications\PaymentPaidNotification($batch->id, $totalPayment));
 
         return redirect()->back()->with('message', 'Transaction finalized! Total Payment: ₱' . number_format($totalPayment, 2));
     }
@@ -249,6 +238,21 @@ class MillerController extends Controller
             'driver_id' => $request->driver_id,
             'delivery_status' => 'Pending'
         ]);
+
+        // Withdraw any pending pool booking from the driver grab pool and assign it.
+        $bookingColumn = $request->type === 'palay' ? 'harvest_batch_id' : 'order_id';
+        \App\Models\Booking::where($bookingColumn, $model->id)
+            ->where('status', \App\Enums\BookingStatus::Pending->value)
+            ->update([
+                'driver_id' => $request->driver_id,
+                'status' => \App\Enums\BookingStatus::Assigned->value,
+            ]);
+
+        if ($request->type === 'palay') {
+            $model->user?->notify(new \App\Notifications\DriverAssignedNotification($model, $request->driver_id));
+        } else {
+            $model->retailer?->notify(new \App\Notifications\DriverAssignedNotification($model, $request->driver_id));
+        }
 
         return redirect()->back()->with('message', 'Driver assigned successfully!');
     }
@@ -363,29 +367,14 @@ class MillerController extends Controller
                 'updated_at' => now()
             ]);
 
-            $retailerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->retailer_id]);
-            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
-
-            $retailerWallet->debit($order->total_price);
-            $millerWallet->credit($order->total_price);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => $order->retailer_id,
-                'amount' => $order->total_price,
-                'type' => 'debit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment for Rice Order #' . $order->id . ' (Picked up)'
-            ]);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => auth()->id(),
-                'amount' => $order->total_price,
-                'type' => 'credit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment received for Rice Order #' . $order->id . ' (Picked up)'
-            ]);
+            \App\Services\PaymentService::transfer(
+                $order->retailer_id,
+                auth()->id(),
+                $order->total_price,
+                'Payment for Rice Order #' . $order->id . ' (Picked up)',
+                'Payment received for Rice Order #' . $order->id . ' (Picked up)',
+                $order
+            );
         });
 
         return redirect()->back()->with('message', 'Pickup completed successfully!');
@@ -415,7 +404,7 @@ class MillerController extends Controller
         // 1. Palay Picking (Inbound) - ONLY UNLOCKED AFTER A SUCCESSFUL HANDSHAKE
         $inbound = HarvestBatch::with(['user', 'driver'])
             ->where('accepted_miller_id', auth()->id())
-            ->whereIn('status', ['Accepted', 'sold', 'received', 'processing', 'milled', 'payment_pending', 'payment_authorized'])
+            ->whereIn('status', [\App\Enums\HarvestBatchStatus::Accepted->value, 'sold', 'received', 'processing', 'milled', 'payment_pending', 'payment_authorized'])
             ->whereIn('delivery_status', ['Pending', 'In Transit', 'Received', 'Payment Pending', 'Payment Authorized'])
             ->latest()
             ->get();

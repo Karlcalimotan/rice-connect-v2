@@ -132,7 +132,7 @@ return new class extends Migration
             $table->timestamp('delivered_date')->nullable();
             $table->decimal('delay_hours', 10, 2)->default(0); // Hours delayed
             $table->timestamps();
-            $table->index(['source_region', 'destination_region', 'shipped_date']);
+            $table->index(['source_region', 'destination_region', 'shipped_date'], 'regional_distribution_logs_src_dst_date_index');
         });
     }
 

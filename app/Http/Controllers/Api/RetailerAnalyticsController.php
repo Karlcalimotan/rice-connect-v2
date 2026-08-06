@@ -52,6 +52,11 @@ class RetailerAnalyticsController extends Controller
     {
         $retailer = Auth::user();
         
+        $dayNames = [
+            'Mon' => 'Monday', 'Tue' => 'Tuesday', 'Wed' => 'Wednesday',
+            'Thu' => 'Thursday', 'Fri' => 'Friday', 'Sat' => 'Saturday', 'Sun' => 'Sunday',
+        ];
+
         $heatmapData = ConsumerDemandHeatmap::where('retailer_id', $retailer->id)
             ->selectRaw('
                 day_of_week,
@@ -61,20 +66,24 @@ class RetailerAnalyticsController extends Controller
             ')
             ->groupBy('day_of_week', 'time_slot')
             ->get()
-            ->groupBy('day_of_week')
+            ->groupBy(function ($slot) use ($dayNames) {
+                return $dayNames[$slot->day_of_week] ?? ucfirst($slot->day_of_week);
+            })
             ->map(function ($dayData) {
                 return $dayData->map(function ($slot) {
+                    $timeSlot = $slot->time_slot === 'noon' ? 'afternoon' : $slot->time_slot;
+
                     return [
-                        'time_slot' => $slot->time_slot,
+                        'time_slot' => $timeSlot,
                         'demand' => $slot->total_demand,
                         'avg_quantity' => round($slot->avg_quantity, 2),
-                        'intensity' => match(true) {
+                        'intensity' => match (true) {
                             $slot->total_demand >= 100 => 'high',
                             $slot->total_demand >= 50 => 'medium',
                             default => 'low',
                         },
                     ];
-                })->toArray();
+                })->values();
             });
 
         return response()->json([
@@ -139,7 +148,7 @@ class RetailerAnalyticsController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => [
-                'avg_turnover_rate' => round($avgTurnover, 2),
+                'avg_turnover_rate' => round($avgTurnover ?? 0, 2),
                 'total_profit' => round($totalProfit, 2),
                 'varieties_stocked' => $varietyCount,
             ],
