@@ -14,6 +14,13 @@ class FinancialLedgerSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Idempotency notes:
+     *  - Starting capital is backed by a real "Opening Balance" ledger entry, so
+     *    `sum(credits) - sum(debits) == wallet.balance` holds by construction and
+     *    the audit command can reconcile wallets without zeroing seeded funds.
+     *  - Historic batch/order ledgers and the standalone analytics entries are
+     *    guarded so re-running this seeder never double-pays or re-inflates.
      */
     public function run(): void
     {
@@ -27,20 +34,24 @@ class FinancialLedgerSeeder extends Seeder
             return;
         }
 
-        // 1. Give users some starting balances if wallets don't exist
-        $millerWallet = Wallet::firstOrCreate(['user_id' => $miller->id], ['balance' => 500000]);
+        // 1. Wallets + ledger-backed opening balances
+        $millerWallet = $this->ensureWalletWithOpeningBalance($miller, 500000, 'Opening Balance (miller startup capital)');
+        $retailerWallet = $this->ensureWalletWithOpeningBalance($retailer, 200000, 'Opening Balance (retailer startup capital)');
         $farmerWallet = Wallet::firstOrCreate(['user_id' => $farmer->id], ['balance' => 0]);
-        $retailerWallet = Wallet::firstOrCreate(['user_id' => $retailer->id], ['balance' => 200000]);
         $driverWallet = Wallet::firstOrCreate(['user_id' => $driver->id], ['balance' => 0]);
 
-        // 2. Fetch existing completed batches and orders to generate historic ledgers for them
+        // 2. Historic ledgers for completed palay batches (Farmer -> Miller)
         $completedBatches = HarvestBatch::where('status', 'received')->get();
-        
+
         foreach ($completedBatches as $batch) {
+            if (empty($batch->actual_weight_kg) || $batch->actual_weight_kg <= 0) {
+                $this->command->warn("Skipping unweighed batch #{$batch->id} (actual_weight_kg is empty). Backfill it before generating its ledger.");
+                continue;
+            }
+
             $payment = $batch->actual_weight_kg * ($batch->final_price_per_kg ?? 20);
 
-            // Avoid duplicate ledgers
-            if (LedgerEntry::where('reference_type', get_class($batch))->where('reference_id', $batch->id)->exists()) {
+            if ($this->hasLedgerFor($batch)) {
                 continue;
             }
 
@@ -70,11 +81,11 @@ class FinancialLedgerSeeder extends Seeder
             ]);
         }
 
-        // 3. Retailer -> Miller -> Driver Orders
+        // 3. Historic ledgers for completed rice orders (Retailer -> Miller -> Driver)
         $completedOrders = Order::where('status', 'completed')->get();
-        
+
         foreach ($completedOrders as $order) {
-            if (LedgerEntry::where('reference_type', get_class($order))->where('reference_id', $order->id)->exists()) {
+            if ($this->hasLedgerFor($order)) {
                 continue;
             }
 
@@ -105,7 +116,7 @@ class FinancialLedgerSeeder extends Seeder
 
             if ($order->driver_id && $order->delivery_fee > 0) {
                 $orderDriverWallet = Wallet::firstOrCreate(['user_id' => $order->driver_id]);
-                
+
                 $millerWallet->debit($order->delivery_fee);
                 $orderDriverWallet->credit($order->delivery_fee);
 
@@ -133,33 +144,78 @@ class FinancialLedgerSeeder extends Seeder
             }
         }
 
-        // 4. Standalone dummy ledger entries for analytics views
-        for ($i = 1; $i <= 5; $i++) {
-            $amount = rand(500, 5000);
-            $date = Carbon::now()->subDays(rand(1, 14));
-            
-            // Farmer random credit
-            $farmerWallet->credit($amount);
+        // 4. Standalone dummy ledger entries for analytics views (idempotent).
+        //    Guarded as a single unit: if any farmer bonus already exists, skip.
+        $alreadySeeded = LedgerEntry::where('user_id', $farmer->id)
+            ->whereNull('reference_type')
+            ->where('description', 'External Palay Sale Bonus')
+            ->exists();
+
+        if (!$alreadySeeded) {
+            for ($i = 1; $i <= 5; $i++) {
+                $amount = rand(500, 5000);
+                $date = Carbon::now()->subDays(rand(1, 14));
+
+                $farmerWallet->credit($amount);
+                LedgerEntry::create([
+                    'user_id' => $farmer->id,
+                    'amount' => $amount,
+                    'type' => 'credit',
+                    'description' => "External Palay Sale Bonus",
+                    'created_at' => $date,
+                    'updated_at' => $date,
+                ]);
+
+                $tip = rand(50, 200);
+                $driverWallet->credit($tip);
+                LedgerEntry::create([
+                    'user_id' => $driver->id,
+                    'amount' => $tip,
+                    'type' => 'credit',
+                    'description' => "Cash Tip #{$i}",
+                    'created_at' => $date,
+                    'updated_at' => $date,
+                ]);
+            }
+        }
+    }
+
+    private function ensureWalletWithOpeningBalance(User $user, float $amount, string $description): Wallet
+    {
+        $wallet = Wallet::firstOrCreate(['user_id' => $user->id], ['balance' => 0]);
+
+        $openingExists = LedgerEntry::where('user_id', $user->id)
+            ->whereNull('reference_type')
+            ->whereNull('reference_id')
+            ->where('type', 'credit')
+            ->where('description', $description)
+            ->exists();
+
+        if (!$openingExists) {
             LedgerEntry::create([
-                'user_id' => $farmer->id,
+                'user_id' => $user->id,
                 'amount' => $amount,
                 'type' => 'credit',
-                'description' => "External Palay Sale Bonus",
-                'created_at' => $date,
-                'updated_at' => $date,
+                'reference_type' => null,
+                'reference_id' => null,
+                'description' => $description,
             ]);
 
-            // Driver random delivery tip
-            $tip = rand(50, 200);
-            $driverWallet->credit($tip);
-            LedgerEntry::create([
-                'user_id' => $driver->id,
-                'amount' => $tip,
-                'type' => 'credit',
-                'description' => "Cash Tip #{$i}",
-                'created_at' => $date,
-                'updated_at' => $date,
-            ]);
+            // Only bump the balance when the wallet was freshly created (balance 0);
+            // a pre-existing wallet (e.g. on a partially seeded DB) already holds
+            // its capital, we are only backfilling the backing ledger entry.
+            if ((float) $wallet->balance === 0.0) {
+                $wallet->credit($amount);
+            }
         }
+
+        return $wallet;
+    }
+
+    private function hasLedgerFor($model): bool
+    {
+        return LedgerEntry::where('reference_type', get_class($model))
+            ->where('reference_id', $model->id)
+            ->exists();
     }
 }
