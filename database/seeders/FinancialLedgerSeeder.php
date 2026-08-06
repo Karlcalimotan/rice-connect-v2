@@ -55,30 +55,15 @@ class FinancialLedgerSeeder extends Seeder
                 continue;
             }
 
-            $millerWallet->debit($payment);
-            $farmerWallet->credit($payment);
-
-            LedgerEntry::create([
-                'user_id' => $miller->id,
-                'amount' => $payment,
-                'type' => 'debit',
-                'reference_type' => get_class($batch),
-                'reference_id' => $batch->id,
-                'description' => 'Payment for Harvest Batch #' . $batch->id,
-                'created_at' => $batch->updated_at,
-                'updated_at' => $batch->updated_at,
-            ]);
-
-            LedgerEntry::create([
-                'user_id' => $batch->user_id,
-                'amount' => $payment,
-                'type' => 'credit',
-                'reference_type' => get_class($batch),
-                'reference_id' => $batch->id,
-                'description' => 'Payment received for Harvest Batch #' . $batch->id,
-                'created_at' => $batch->updated_at,
-                'updated_at' => $batch->updated_at,
-            ]);
+            \App\Services\PaymentService::transfer(
+                $miller->id,
+                $batch->user_id,
+                $payment,
+                'Payment for Harvest Batch #' . $batch->id,
+                'Payment received for Harvest Batch #' . $batch->id,
+                $batch,
+                ['created_at' => $batch->updated_at]
+            );
         }
 
         // 3. Historic ledgers for completed rice orders (Retailer -> Miller -> Driver)
@@ -89,58 +74,26 @@ class FinancialLedgerSeeder extends Seeder
                 continue;
             }
 
-            $retailerWallet->debit($order->total_price);
-            $millerWallet->credit($order->total_price);
-
-            LedgerEntry::create([
-                'user_id' => $order->retailer_id,
-                'amount' => $order->total_price,
-                'type' => 'debit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment for Rice Order #' . $order->id,
-                'created_at' => $order->updated_at,
-                'updated_at' => $order->updated_at,
-            ]);
-
-            LedgerEntry::create([
-                'user_id' => $order->miller_id,
-                'amount' => $order->total_price,
-                'type' => 'credit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment received for Rice Order #' . $order->id,
-                'created_at' => $order->updated_at,
-                'updated_at' => $order->updated_at,
-            ]);
+            \App\Services\PaymentService::transfer(
+                $order->retailer_id,
+                $order->miller_id,
+                $order->total_price,
+                'Payment for Rice Order #' . $order->id,
+                'Payment received for Rice Order #' . $order->id,
+                $order,
+                ['created_at' => $order->updated_at]
+            );
 
             if ($order->driver_id && $order->delivery_fee > 0) {
-                $orderDriverWallet = Wallet::firstOrCreate(['user_id' => $order->driver_id]);
-
-                $millerWallet->debit($order->delivery_fee);
-                $orderDriverWallet->credit($order->delivery_fee);
-
-                LedgerEntry::create([
-                    'user_id' => $order->miller_id,
-                    'amount' => $order->delivery_fee,
-                    'type' => 'debit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Delivery fee payout for Order #' . $order->id,
-                    'created_at' => $order->updated_at,
-                    'updated_at' => $order->updated_at,
-                ]);
-
-                LedgerEntry::create([
-                    'user_id' => $order->driver_id,
-                    'amount' => $order->delivery_fee,
-                    'type' => 'credit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Commission received for Order #' . $order->id,
-                    'created_at' => $order->updated_at,
-                    'updated_at' => $order->updated_at,
-                ]);
+                \App\Services\PaymentService::transfer(
+                    $order->miller_id,
+                    $order->driver_id,
+                    $order->delivery_fee,
+                    'Delivery fee payout for Order #' . $order->id,
+                    'Commission received for Order #' . $order->id,
+                    $order,
+                    ['created_at' => $order->updated_at]
+                );
             }
         }
 
@@ -156,26 +109,22 @@ class FinancialLedgerSeeder extends Seeder
                 $amount = rand(500, 5000);
                 $date = Carbon::now()->subDays(rand(1, 14));
 
-                $farmerWallet->credit($amount);
-                LedgerEntry::create([
-                    'user_id' => $farmer->id,
-                    'amount' => $amount,
-                    'type' => 'credit',
-                    'description' => "External Palay Sale Bonus",
-                    'created_at' => $date,
-                    'updated_at' => $date,
-                ]);
+                \App\Services\PaymentService::credit(
+                    $farmer->id,
+                    $amount,
+                    "External Palay Sale Bonus",
+                    null,
+                    ['created_at' => $date]
+                );
 
                 $tip = rand(50, 200);
-                $driverWallet->credit($tip);
-                LedgerEntry::create([
-                    'user_id' => $driver->id,
-                    'amount' => $tip,
-                    'type' => 'credit',
-                    'description' => "Cash Tip #{$i}",
-                    'created_at' => $date,
-                    'updated_at' => $date,
-                ]);
+                \App\Services\PaymentService::credit(
+                    $driver->id,
+                    $tip,
+                    "Cash Tip #{$i}",
+                    null,
+                    ['created_at' => $date]
+                );
             }
         }
     }

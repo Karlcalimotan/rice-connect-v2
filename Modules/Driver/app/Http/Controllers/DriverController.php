@@ -38,10 +38,24 @@ class DriverController extends Controller
             'rice' => Order::where('driver_id', $driverId)->whereIn('delivery_status', ['Confirmed Received', 'Completed'])->latest()->limit(10)->get(),
         ];
 
+        // 4. Grab-style Broadcast system bookings
+        $pendingBookings = \App\Models\Booking::with('bookable')
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        $activeBookings = \App\Models\Booking::with(['bookable', 'harvestBatch.user', 'order.retailer'])
+            ->where('driver_id', $driverId)
+            ->whereIn('status', ['assigned', 'at_pickup', 'in_transit', 'delivered'])
+            ->latest()
+            ->get();
+
         return Inertia::render('Driver::Dashboard', [
             'palayAssignments' => $palayAssignments,
             'riceAssignments' => $riceAssignments,
             'history' => $history,
+            'pendingBookings' => $pendingBookings,
+            'activeBookings' => $activeBookings,
         ]);
     }
 
@@ -160,53 +174,25 @@ class DriverController extends Controller
             ]);
 
             // Copy wallet logic from RetailerController to ensure funds move if driver signs off
-            $retailerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->retailer_id]);
-            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->miller_id]);
-
-            $retailerWallet->debit($order->total_price);
-            $millerWallet->credit($order->total_price);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => $order->retailer_id,
-                'amount' => $order->total_price,
-                'type' => 'debit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment for Rice Order #' . $order->id . ' (Signed off by Driver)'
-            ]);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => $order->miller_id,
-                'amount' => $order->total_price,
-                'type' => 'credit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment received for Rice Order #' . $order->id . ' (Signed off by Driver)'
-            ]);
+            \App\Services\PaymentService::transfer(
+                $order->retailer_id,
+                $order->miller_id,
+                $order->total_price,
+                'Payment for Rice Order #' . $order->id . ' (Signed off by Driver)',
+                'Payment received for Rice Order #' . $order->id . ' (Signed off by Driver)',
+                $order
+            );
 
             // Driver commission
             if ($order->delivery_fee > 0) {
-                $driverWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
-                $millerWallet->debit($order->delivery_fee);
-                $driverWallet->credit($order->delivery_fee);
-
-                \App\Models\LedgerEntry::create([
-                    'user_id' => $order->miller_id,
-                    'amount' => $order->delivery_fee,
-                    'type' => 'debit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Delivery fee payout for Order #' . $order->id
-                ]);
-
-                \App\Models\LedgerEntry::create([
-                    'user_id' => auth()->id(),
-                    'amount' => $order->delivery_fee,
-                    'type' => 'credit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Commission received for Order #' . $order->id
-                ]);
+                \App\Services\PaymentService::transfer(
+                    $order->miller_id,
+                    auth()->id(),
+                    $order->delivery_fee,
+                    'Delivery fee payout for Order #' . $order->id,
+                    'Commission received for Order #' . $order->id,
+                    $order
+                );
             }
         });
 

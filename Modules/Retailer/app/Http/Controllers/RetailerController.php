@@ -61,13 +61,15 @@ class RetailerController extends Controller
 
         $totalPrice = ($requestedSacks * $pricePerSack) + $deliveryCharge;
 
-        DB::transaction(function () use ($request, $batch, $requestedSacks, $deliveryCharge, $totalPrice) {
+        $order = null;
+
+        DB::transaction(function () use ($request, $batch, $requestedSacks, $deliveryCharge, $totalPrice, &$order) {
             $decrementKg = $requestedSacks * 50;
 
             $batch->decrement('total_sacks', $requestedSacks);
             $batch->decrement('unpacked_weight_kg', $decrementKg);
 
-            \App\Models\Order::create([
+            $order = \App\Models\Order::create([
                 'retailer_id' => auth()->id(),
                 'miller_id' => $batch->miller_id,
                 'stock_id' => $batch->id,
@@ -76,10 +78,11 @@ class RetailerController extends Controller
                 'total_weight' => $decrementKg,
                 'total_price' => $totalPrice,
                 'shipping_method' => $request->shipping_method,
+                'fulfillment_type' => $request->shipping_method, // enum: ['pickup', 'delivery']
                 'delivery_fee' => $deliveryCharge,
                 'delivery_status' => 'Pending',
                 'delivery_type' => 'rice',
-                'status' => 'pending_preparation',
+                'status' => $request->shipping_method === 'pickup' ? 'ready_for_pickup' : 'pending_preparation',
             ]);
 
             // Threshold Check: Notify miller if stock is low
@@ -90,6 +93,19 @@ class RetailerController extends Controller
                 }
             }
         });
+
+        if ($order) {
+            if ($request->shipping_method === 'delivery') {
+                \App\Services\BookingBroadcastService::broadcastRiceDelivery($order);
+            } else {
+                // Send a release notification directly to the Miller
+                $miller = \App\Models\User::find($order->miller_id);
+                if ($miller) {
+                    $retailerName = auth()->user()->first_name . ' ' . auth()->user()->last_name;
+                    $miller->notify(new \App\Notifications\ReleaseRequestedNotification($order->id, $retailerName));
+                }
+            }
+        }
 
         return redirect()->route('retailer.purchases')->with('message', 'Order placed successfully!');
     }
@@ -138,53 +154,26 @@ class RetailerController extends Controller
                 'updated_at' => now()
             ]);
 
-            $retailerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => auth()->id()]);
-            $millerWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->miller_id]);
+            \App\Models\Booking::where('order_id', $order->id)->update(['status' => 'delivered']);
 
-            $retailerWallet->debit($order->total_price);
-            $millerWallet->credit($order->total_price);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => auth()->id(),
-                'amount' => $order->total_price,
-                'type' => 'debit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment for Rice Order #' . $order->id
-            ]);
-
-            \App\Models\LedgerEntry::create([
-                'user_id' => $order->miller_id,
-                'amount' => $order->total_price,
-                'type' => 'credit',
-                'reference_type' => get_class($order),
-                'reference_id' => $order->id,
-                'description' => 'Payment received for Rice Order #' . $order->id
-            ]);
+            \App\Services\PaymentService::transfer(
+                auth()->id(),
+                $order->miller_id,
+                $order->total_price,
+                'Payment for Rice Order #' . $order->id,
+                'Payment received for Rice Order #' . $order->id,
+                $order
+            );
 
             if ($order->driver_id && $order->delivery_fee > 0) {
-                $driverWallet = \App\Models\Wallet::firstOrCreate(['user_id' => $order->driver_id]);
-                
-                $millerWallet->debit($order->delivery_fee);
-                $driverWallet->credit($order->delivery_fee);
-
-                \App\Models\LedgerEntry::create([
-                    'user_id' => $order->miller_id,
-                    'amount' => $order->delivery_fee,
-                    'type' => 'debit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Delivery fee payout for Order #' . $order->id
-                ]);
-
-                \App\Models\LedgerEntry::create([
-                    'user_id' => $order->driver_id,
-                    'amount' => $order->delivery_fee,
-                    'type' => 'credit',
-                    'reference_type' => get_class($order),
-                    'reference_id' => $order->id,
-                    'description' => 'Commission received for Order #' . $order->id
-                ]);
+                \App\Services\PaymentService::transfer(
+                    $order->miller_id,
+                    $order->driver_id,
+                    $order->delivery_fee,
+                    'Delivery fee payout for Order #' . $order->id,
+                    'Commission received for Order #' . $order->id,
+                    $order
+                );
             }
         });
 

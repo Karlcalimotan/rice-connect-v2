@@ -144,11 +144,13 @@ class FarmerController extends Controller
         $batch = HarvestBatch::where('user_id', Auth::id())->findOrFail($id);
 
         $batch->update([
-            'status' => 'Accepted',
-            'delivery_status' => 'Pending',
+            'status' => \App\Enums\HarvestBatchStatus::Accepted->value,
+            'delivery_status' => \App\Enums\DeliveryStatus::Pending->value,
             'accepted_miller_id' => $request->miller_id,
             'buyer_id' => $request->miller_id, // Sync for legacy buyer-based queries
         ]);
+
+        \App\Services\BookingBroadcastService::broadcastPalayPickup($batch);
 
         return redirect()->back()->with('message', 'Agreement reached! Miller has been accepted.');
     }

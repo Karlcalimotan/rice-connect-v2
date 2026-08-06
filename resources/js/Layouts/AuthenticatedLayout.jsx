@@ -117,6 +117,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                             </NavLink>
                                         </li>
                                         <li>
+                                            <NavLink href={route('miller.incoming')} active={route().current('miller.incoming')} onClick={handleNavClick} className="w-full">
+                                                <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-[#c3a153]/20 bg-white/5 text-[#d8bd73]"><Icons.Logistics /></span>
+                                                <span>Incoming Palay</span>
+                                            </NavLink>
+                                        </li>
+                                        <li>
                                             <NavLink href={route('miller.inventory')} active={route().current('miller.inventory')} onClick={handleNavClick} className="w-full">
                                                 <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-[#c3a153]/20 bg-white/5 text-[#d8bd73]"><Icons.Inventory /></span>
                                                 <span>Palay Inventory</span>
