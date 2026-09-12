@@ -8,10 +8,10 @@ type LedgerEntry = {
   amount: number
   type: string
   description: string
-  created_at: string
-  users: {
-    first_name: string
-    last_name: string
+  createdAt: string
+  user: {
+    firstName: string
+    lastName: string
     role: string
   } | null
 }
@@ -109,8 +109,8 @@ export default function AdminTransactionsPage() {
                 {filtered.map((entry) => (
                   <tr key={entry.id}>
                     <td className="whitespace-nowrap px-6 py-4">
-                      {entry.users?.first_name} {entry.users?.last_name}
-                      <span className="ml-2 text-xs text-gray-400">({entry.users?.role})</span>
+                      {entry.user?.firstName} {entry.user?.lastName}
+                      <span className="ml-2 text-xs text-gray-400">({entry.user?.role})</span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       <span
@@ -135,7 +135,7 @@ export default function AdminTransactionsPage() {
                       {entry.description}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-gray-500">
-                      {formatDate(entry.created_at)}
+                      {formatDate(entry.createdAt)}
                     </td>
                   </tr>
                 ))}

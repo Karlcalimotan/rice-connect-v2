@@ -6,11 +6,11 @@ import { formatDate } from '@/lib/utils'
 type User = {
   id: string
   email: string
-  first_name: string
-  last_name: string
+  firstName: string
+  lastName: string
   role: string
   municipality: string
-  created_at: string
+  createdAt: string
 }
 
 export default function AdminUsersPage() {
@@ -99,7 +99,7 @@ export default function AdminUsersPage() {
                 {users.map((user) => (
                   <tr key={user.id}>
                     <td className="whitespace-nowrap px-6 py-4">
-                      {user.first_name} {user.last_name}
+                      {user.firstName} {user.lastName}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-gray-500">
                       {user.email}
@@ -117,7 +117,7 @@ export default function AdminUsersPage() {
                       {user.municipality}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-gray-500">
-                      {formatDate(user.created_at)}
+                      {formatDate(user.createdAt)}
                     </td>
                   </tr>
                 ))}

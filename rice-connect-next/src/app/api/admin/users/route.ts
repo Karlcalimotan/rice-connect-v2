@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
         email: true,
         role: true,
         municipality: true,
+        createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
     })
