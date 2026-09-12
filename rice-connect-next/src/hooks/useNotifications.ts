@@ -13,7 +13,7 @@ export function useNotifications(userId: string) {
         if (res.ok) {
           const data = await res.json()
           setNotifications(data.notifications)
-          setUnreadCount(data.notifications.filter((n: any) => n.notification_status === 'unread').length)
+          setUnreadCount(data.notifications.filter((n: any) => n.notificationStatus === 'unread').length)
         }
       } catch {
         // error fetching notifications
@@ -37,7 +37,7 @@ export function useNotifications(userId: string) {
     setNotifications((prev) =>
       prev.map((n) =>
         n.id === notificationId
-          ? { ...n, notification_status: 'read', read_at: new Date().toISOString() }
+          ?           { ...n, notificationStatus: 'read', readAt: new Date().toISOString() }
           : n
       )
     )

@@ -23,7 +23,7 @@ export function useUser() {
         const res = await fetch('/api/user')
         if (res.ok) {
           const data = await res.json()
-          setUser(data.user)
+          setUser(data)
         }
       } catch {
         // user not authenticated or error

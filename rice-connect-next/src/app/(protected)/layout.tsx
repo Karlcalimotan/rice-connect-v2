@@ -173,13 +173,13 @@ export default function ProtectedLayout({
                         <div
                           key={notification.id}
                           className={`border-b p-3 ${
-                            notification.notification_status === 'unread' ? 'bg-blue-50' : ''
+                            notification.notificationStatus === 'unread' ? 'bg-blue-50' : ''
                           }`}
                           onClick={() => markAsRead(notification.id)}
                         >
                           <p className="text-sm">{notification.data?.message || 'New notification'}</p>
                           <p className="mt-1 text-xs text-gray-500">
-                            {new Date(notification.created_at).toLocaleDateString()}
+                            {new Date(notification.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       ))

@@ -27,10 +27,17 @@ export default function FarmerWalletPage() {
 
     const fetchData = async () => {
       const res = await fetch('/api/wallet')
-      const data = await res.json()
-
-      if (data.wallet) setWallet(data.wallet)
-      if (data.entries) setEntries(data.entries)
+      if (res.ok) {
+        const { balance, ledgerEntries } = await res.json()
+        setWallet({ balance })
+        setEntries(ledgerEntries.map((e: Record<string, unknown>) => ({
+          id: e.id,
+          amount: e.amount,
+          type: e.type,
+          description: e.description,
+          created_at: e.createdAt,
+        })))
+      }
       setLoading(false)
     }
 
