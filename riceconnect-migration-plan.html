@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiceConnect — Migration Plan (Laravel → Next.js/Supabase) · Syntaxure Labs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050505; --text:#ededed; --line:rgba(255,255,255,.10);
+  --panel:rgba(255,255,255,.045);
+  --muted:#8A93A0;
+  --accent:#22D3EE; --accent-2:#A855F7;
+  --warn:#F59E0B; --bad:#F87171; --good:#34D399;
+  --r-lg:16px;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto;padding:0 clamp(18px,4vw,32px) 120px}
+header.top{padding:36px 0 26px;border-bottom:1px solid var(--line);margin-bottom:34px}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h1{font-size:clamp(26px,4.5vw,36px);line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;font-weight:600}
+.sub{color:#c3c9d1;font-size:15.5px;max-width:70ch;margin:0}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding:4px 9px;
+  text-transform:uppercase;color:var(--accent);display:inline-block}
+.chip.w{color:var(--warn)} .chip.g{color:var(--good)} .chip.m{color:var(--muted)}
+
+section{margin-bottom:48px}
+h2{font-size:clamp(20px,2.4vw,24px);line-height:1.25;letter-spacing:-.015em;margin:0 0 16px;font-weight:600;
+  display:flex;align-items:center;gap:10px}
+h2 .n{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--line);
+  border-radius:6px;padding:2px 7px;background:var(--panel)}
+h3{font-size:15.5px;margin:24px 0 8px;font-weight:600}
+h4{font-size:14px;margin:18px 0 6px;font-weight:600;color:#fff}
+p{margin:0 0 14px;color:#d5d9de;max-width:74ch}
+ul,ol{padding-left:20px;margin:0 0 14px;max-width:74ch}
+li{margin-bottom:6px;color:#d5d9de}
+a{color:var(--accent)}
+strong{color:#fff;font-weight:600}
+code{font-family:var(--mono);font-size:.86em;background:var(--panel);border:1px solid var(--line);
+  border-radius:4px;padding:1px 5px;color:var(--accent)}
+
+.tldr{background:linear-gradient(180deg,rgba(34,211,238,.06),rgba(168,85,247,.04));
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;margin-bottom:8px}
+.tldr h2{margin-bottom:12px}
+.tldr ul{margin:0;max-width:none}
+.tldr li{margin-bottom:9px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;margin:16px 0}
+.callout{position:relative;padding:16px 20px;border-radius:14px;margin:18px 0;
+  background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.callout.bad::before{background:var(--bad)} .callout.warn::before{background:var(--warn)}
+.callout.good::before{background:var(--good)} .callout.alt::before{background:var(--accent-2)}
+.callout h4{margin:0 0 6px} .callout p:last-child{margin-bottom:0}
+
+.tw{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:480px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td{color:#d5d9de}
+td b{color:#fff}
+
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;
+  border-radius:4px;padding:2px 6px;display:inline-block;border:1px solid var(--line)}
+.tag.keep{color:var(--good);border-color:rgba(52,211,153,.3)}
+.tag.rebuild{color:var(--accent);border-color:rgba(34,211,238,.3)}
+.tag.defer{color:var(--muted)}
+.tag.cut{color:var(--bad);border-color:rgba(248,113,113,.3)}
+
+/* timeline */
+.timeline{display:flex;flex-direction:column;gap:0;margin:20px 0}
+.tl-row{display:grid;grid-template-columns:130px 1fr;gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+.tl-row:first-child{border-top:none}
+.tl-date{font-family:var(--mono);font-size:11.5px;color:var(--accent);padding-top:2px}
+.tl-body b{display:block;font-size:14.5px;color:#fff;margin-bottom:4px}
+.tl-body p{margin-bottom:0;font-size:13.5px}
+.tl-row.mandatory .tl-date{color:var(--warn)}
+.tl-row.pilot .tl-date{color:var(--accent-2)}
+.tl-row.pitch .tl-date{color:var(--bad)}
+
+footer.foot{border-top:1px solid var(--line);margin-top:12px;padding-top:22px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="eyebrow">Syntaxure Labs · Internal · Migration Plan · 09 September 2026</span>
+  <h1>RiceConnect — Migration Plan: Laravel/Render → Next.js/Supabase</h1>
+  <p class="sub">Scoped against the standing 30-day competition calendar, not against an open-ended migration timeline. Executive decision confirmed: rebuild on the team's default stack — Next.js + Supabase + Prisma + Vercel, following the same pattern as the LikasLens migration.</p>
+  <div class="meta-row">
+    <span class="chip m">From: rice-connect-v2 (Laravel 12 / Inertia / React / Render)</span>
+    <span class="chip">To: Next.js + Supabase + Prisma + Vercel</span>
+    <span class="chip w">11 dev days before mandatory capacity-building block</span>
+  </div>
+</header>
+
+<section class="tldr">
+  <h2><span class="n">TL;DR</span></h2>
+  <ul>
+    <li>You're not designing this system from scratch — Karl's Laravel repo is a working, tested spec of the domain model. This is a <strong>port</strong>, not a rebuild-from-nothing, and the schedule below assumes that speed advantage.</li>
+    <li><strong>Today (Sep 9) to Sep 20</strong> is the entire dev runway before the mandatory capacity-building block. That's 11 calendar days to port five role modules, a tested money ledger, and auth. Full parity with Karl's repo in that window is not realistic — the plan below ports the wedge that carries the pitch and the pilot, and explicitly defers the rest.</li>
+    <li>Recommended cut, consistent with the competition-readiness review's own "narrow the wedge" call: <strong>ship Farmer + Miller + Ledger + Auth + Market Price Board for the pilot.</strong> Retailer and Driver modules, and the analytics dashboards, are real but not what 30 farmer interviews and a live pilot need on Oct 4.</li>
+    <li>The two critical bugs found in the architecture review (queued notifications with no worker; free-tier cold starts) <strong>don't get re-created</strong> in this migration if the plan below is followed — notifications go synchronous by default, and Vercel has no idle spin-down to begin with.</li>
+    <li>Branch/deploy convention carries over from LikasLens: <code>main</code> + <code>development</code> (+ <code>staging</code> if a preview environment is needed before the pilot), Vercel builds gated to the branches that matter.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">1</span>Target stack — the decisions this migration locks in</h2>
+  <div class="tw">
+    <table>
+      <tr><th>Layer</th><th>Decision</th><th>Why</th></tr>
+      <tr><td>Framework</td><td>Next.js (App Router)</td><td>Team default; matches LikasLens and every other current Syntaxure project</td></tr>
+      <tr><td>DB access</td><td>Prisma</td><td>Team default. See §4 — this has one real consequence for how authorization gets enforced</td></tr>
+      <tr><td>Auth</td><td>Supabase Auth</td><td>Email/password is enough for 5 known role types; no need for anything heavier</td></tr>
+      <tr><td>Authorization</td><td>App-layer role check in Next.js middleware + API routes — <em>not</em> Postgres RLS as the primary boundary</td><td>Mirrors the exact pattern already verified sound in Karl's <code>RoleMiddleware</code> (single role-string check per route group). Prisma typically connects with a role that bypasses RLS, so treating RLS as your enforcement layer while querying through Prisma is a false sense of security unless deliberately wired otherwise — don't assume it's protecting you if you didn't wire it that way</td></tr>
+      <tr><td>File storage</td><td>Supabase Storage (private bucket, signed URLs)</td><td>Fixes the gap flagged in the architecture review before the weigh-slip upload feature is even built — no ephemeral-disk trap this time</td></tr>
+      <tr><td>Background jobs / notifications</td><td>Synchronous send inside the API route for the pilot; no queue infrastructure</td><td>Directly avoids re-creating Finding #1 from the architecture review. Four notification types at pilot scale don't need a queue — add one later if volume ever justifies it</td></tr>
+      <tr><td>Hosting</td><td>Vercel</td><td>No idle-spin-down (unlike Render free tier) — removes the cold-start demo-day risk entirely. <strong>Confirm plan tier:</strong> Vercel's free Hobby tier terms restrict commercial use — since this ships under Syntaxure Labs, verify whether Pro is warranted before the pilot goes live publicly, not as a blocker to development</td></tr>
+      <tr><td>Repo/branch structure</td><td><code>main</code> (production) + <code>development</code> (integration) + <code>staging</code> if needed</td><td>Same convention as LikasLens; Vercel build gating via <code>ignoreCommand</code> to only deploy the branches that matter</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>Scope cut — what ports now vs what waits</h2>
+  <p>This is the single highest-leverage decision in this plan. Porting everything in Karl's repo is a 4–6 week job done properly; you have 11 days. The cut below keeps everything the pitch and the pilot actually need and defers everything the rubric doesn't ask for yet.</p>
+  <div class="tw">
+    <table>
+      <tr><th>Domain area</th><th>Source (Laravel)</th><th>Call</th></tr>
+      <tr><td>Auth + role routing</td><td><code>RoleMiddleware</code>, all module route groups</td><td><span class="tag keep">Port now</span></td></tr>
+      <tr><td>Farmer: harvest batch listing, offer acceptance</td><td><code>Modules/Farmer</code></td><td><span class="tag keep">Port now</span></td></tr>
+      <tr><td>Miller: marketplace browse, offer/booking flow</td><td><code>Modules/Miller</code></td><td><span class="tag keep">Port now</span></td></tr>
+      <tr><td>Wallet + Ledger (money integrity)</td><td><code>PaymentService</code>, <code>Wallet</code>, <code>LedgerEntry</code></td><td><span class="tag keep">Port now — highest priority, see §3</span></td></tr>
+      <tr><td>Market price board</td><td><code>MarketPrice</code></td><td><span class="tag keep">Port now — this is the pitch's public-trust artifact</span></td></tr>
+      <tr><td>Weigh-slip / settlement photo upload</td><td>Not built in Laravel repo either</td><td><span class="tag rebuild">Build fresh, correctly — Supabase Storage from day 1</span></td></tr>
+      <tr><td>Notifications (low stock, pickup, delivery, interest)</td><td><code>app/Notifications</code></td><td><span class="tag rebuild">Port logic, drop the queue — send synchronously</span></td></tr>
+      <tr><td>MillerAdmin global dashboard</td><td><code>Modules/MillerAdmin</code></td><td><span class="tag defer">Minimal version only — enough to run the pilot, not the full dashboard</span></td></tr>
+      <tr><td>Retailer module</td><td><code>Modules/Retailer</code></td><td><span class="tag cut">Out of v1 — no retailer in the pilot cohort</span></td></tr>
+      <tr><td>Driver module + logistics tables</td><td><code>Modules/Driver</code>, <code>RegionalDistributionLog</code></td><td><span class="tag cut">Out of v1 — no delivery leg in a 2–3 buyer pilot</span></td></tr>
+      <tr><td>Analytics (demand heatmap, supply chain metrics, yield metrics)</td><td><code>ConsumerDemandHeatmap</code>, <code>SupplyChainMetric</code>, <code>FarmerYieldMetric</code>, etc.</td><td><span class="tag defer">Post-competition — none of it is load-bearing for Needs Assessment, Financials, or the pitch</span></td></tr>
+    </table>
+  </div>
+  <div class="callout warn">
+    <h4>This cut is a recommendation, not a decision I'm making for you</h4>
+    <p style="margin-bottom:0">If Retailer or Driver are actually part of the pilot cohort you're lining up (coop, 2–3 buyers, weigh-in), say so and they move back into scope — I'm cutting them based on the pilot shape described in the competition-readiness plan (farmer → buyer, no retail or delivery leg mentioned), not because they're unimportant.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>Porting the ledger — the part that has to be right</h2>
+  <p>This is the one piece of Karl's system where a sloppy port costs someone real money. The Laravel version's guarantee — <code>wallet.balance == sum(credits) - sum(debits)</code>, held by construction — needs to survive the move intact, not just look similar.</p>
+  <ul>
+    <li><strong>Schema:</strong> <code>wallets(user_id, balance decimal(15,2))</code> and <code>ledger_entries(user_id, amount decimal(15,2), type, reference_type, reference_id, description)</code> — same shape, ported via Prisma migration with the same <code>CHECK (amount &gt; 0)</code> constraint. Prisma's schema DSL doesn't express CHECK constraints natively — add it via a raw SQL migration step, same way the Laravel version had to for MySQL/Postgres.</li>
+    <li><strong>Idempotency:</strong> keep the unique index on <code>(reference_type, reference_id, user_id, type)</code> as the real guarantee, not just an app-level pre-check. In Prisma, catch the unique-constraint violation (<code>P2002</code>) as the "already recorded" signal in addition to a pre-check — the pre-check is an optimization, the constraint is the actual source of truth, same division of labor as the original.</li>
+    <li><strong>Atomicity:</strong> wrap debit+credit in <code>prisma.$transaction()</code>; use atomic <code>increment</code>/<code>decrement</code> (Prisma supports this natively) rather than read-then-write, exactly matching how the Laravel version avoided lost-update races.</li>
+    <li><strong>Money type:</strong> use a decimal-safe library (e.g. <code>decimal.js</code>) or integer centavos in application code — this migration is the natural point to fix the float-typing note flagged in the architecture review rather than carry it forward.</li>
+    <li><strong>Testing:</strong> port <code>PaymentServiceTest.php</code>'s cases to Vitest, and port the spirit of <code>ledger:check</code> as a script that verifies the invariant against seeded data in CI. Run CI against a real local Postgres (Supabase CLI's local stack, or a Postgres service container) — this closes the gap the architecture review found in Karl's CI, which only ever tested against SQLite and never actually exercised the CHECK constraints.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">4</span>Auth &amp; role enforcement</h2>
+  <p>Five roles (farmer, miller, admin — retailer/driver deferred per §2), same as before. Supabase Auth handles identity; a <code>role</code> column on the user's profile table drives authorization, checked in Next.js middleware for page routes and again in each API route handler — the same "boring and consistent" pattern that made Karl's <code>RoleMiddleware</code> sound in the architecture review, not a new permissions framework. Don't reach for Postgres RLS as the enforcement layer unless you deliberately route DB access through a client that respects it (e.g. Supabase's client library with the user's JWT, not Prisma with a service-role connection) — RLS policies that Prisma silently bypasses are worse than no RLS, because they look like protection and aren't.</p>
+</section>
+
+<section>
+  <h2><span class="n">5</span>Sequencing against the calendar</h2>
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-date">Sep 9–11</div>
+      <div class="tl-body"><b>Phase 0 — Foundation</b><p>Supabase project + Prisma schema (core tables only, per §2's "port now" list), Vercel project wired to the repo, branch structure (<code>main</code>/<code>development</code>) matching LikasLens, Supabase Auth wired with the 3 in-scope roles.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Sep 11–15</div>
+      <div class="tl-body"><b>Phase 1 — Money &amp; identity</b><p>Wallet/Ledger port with tests (§3), auth + role middleware (§4), Farmer harvest-listing flow. This is the load-bearing phase — everything else depends on the ledger being right.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Sep 15–18</div>
+      <div class="tl-body"><b>Phase 2 — Transaction flow</b><p>Miller/buyer marketplace browse, offer + booking + acceptance handshake, market price board, synchronous notifications for the events that fire during this flow.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Sep 18–20</div>
+      <div class="tl-body"><b>Phase 3 — Settlement &amp; hardening</b><p>Weigh-slip photo upload to Supabase Storage, minimal admin view, end-to-end walkthrough on a real phone on mobile data (not on campus wifi — carried over from the original plan's own instruction), deploy to Vercel production, confirm plan tier for commercial use.</p></div>
+    </div>
+    <div class="tl-row mandatory">
+      <div class="tl-date">Sep 21–26</div>
+      <div class="tl-body"><b>Capacity-building (mandatory, no dev time)</b><p>Zero build runway here by rule, not by choice — the eligibility condition already fixes this block. Any schedule slip in Phases 0–3 has nowhere to go but into the pilot window below.</p></div>
+    </div>
+    <div class="tl-row pilot">
+      <div class="tl-date">Sep 27–Oct 4</div>
+      <div class="tl-body"><b>Live pilot</b><p>Runs on whatever shipped by Sep 20. This is why the scope cut in §2 matters more than any individual feature — a working pilot on a smaller system beats a broken one on a bigger scope.</p></div>
+    </div>
+    <div class="tl-row pitch">
+      <div class="tl-date">Oct 5–7</div>
+      <div class="tl-body"><b>Pitch</b><p>Manila. The system just needs to demo cleanly for the 20 seconds of screen time the pitch structure budgets for it — see the pitch timing breakdown in the competition-readiness doc.</p></div>
+    </div>
+  </div>
+  <div class="callout alt">
+    <h4>The honest risk in this schedule</h4>
+    <p style="margin-bottom:0">11 dev days for Phases 0–3 is tight even for a port with a known-working spec to copy from. If Phase 1 (the ledger) runs long, the right move is to cut further into §2's "defer" list — not to compress testing on the money logic. A late pilot with a solid ledger is recoverable; a pilot that mishandles a farmer's payment during a live demo in front of judges is not.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">6</span>What's explicitly not in this plan</h2>
+  <ul>
+    <li>Retailer and Driver modules, and every analytics table — deferred per §2, revisit after Oct 7</li>
+    <li>A background job queue — deliberately not building one; revisit only if notification volume post-pilot actually justifies it</li>
+    <li>Postgres RLS as a real security boundary — not wired this round; the app-layer role check is the boundary, RLS can be layered on later as defense-in-depth once there's time to do it properly</li>
+    <li>Agent/task breakdown for handing individual build tasks to the team or to OpenCode Go agents — say if you want that scoped next; this document is the architecture-level sequencing, not the task-by-task execution plan</li>
+  </ul>
+</section>
+
+<footer class="foot">
+  Migration plan · scoped to the standing Enactus PH 2026 calendar · follows the branch/deploy convention established on LikasLens · ledger and auth port cross-referenced against the rice-connect-v2 architecture review, 08 Sep 2026
+</footer>
+
+</div>
+</body>
+</html>

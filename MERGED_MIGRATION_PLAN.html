@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiceConnect — Merged Migration Plan (Laravel → Next.js/Supabase/Prisma)</title>
+<style>
+:root{
+  --bg:#050505; --text:#ededed; --line:rgba(255,255,255,.10);
+  --panel:rgba(255,255,255,.045);
+  --muted:#8A93A0;
+  --accent:#22D3EE; --accent-2:#A855F7;
+  --warn:#F59E0B; --bad:#F87171; --good:#34D399;
+  --r-lg:16px;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 clamp(18px,4vw,32px) 120px}
+header.top{padding:36px 0 26px;border-bottom:1px solid var(--line);margin-bottom:34px}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h1{font-size:clamp(26px,4.5vw,36px);line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;font-weight:600}
+.sub{color:#c3c9d1;font-size:15.5px;max-width:74ch;margin:0}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding:4px 9px;
+  text-transform:uppercase;color:var(--accent);display:inline-block}
+.chip.w{color:var(--warn)} .chip.g{color:var(--good)} .chip.m{color:var(--muted)} .chip.r{color:var(--bad)}
+
+section{margin-bottom:48px}
+h2{font-size:clamp(20px,2.4vw,24px);line-height:1.25;letter-spacing:-.015em;margin:0 0 16px;font-weight:600;
+  display:flex;align-items:center;gap:10px}
+h2 .n{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--line);
+  border-radius:6px;padding:2px 7px;background:var(--panel)}
+h3{font-size:15.5px;margin:24px 0 8px;font-weight:600}
+h4{font-size:14px;margin:18px 0 6px;font-weight:600;color:#fff}
+p{margin:0 0 14px;color:#d5d9de;max-width:74ch}
+ul,ol{padding-left:20px;margin:0 0 14px;max-width:74ch}
+li{margin-bottom:6px;color:#d5d9de}
+a{color:var(--accent)}
+strong{color:#fff;font-weight:600}
+code{font-family:var(--mono);font-size:.86em;background:var(--panel);border:1px solid var(--line);
+  border-radius:4px;padding:1px 5px;color:var(--accent)}
+
+.tldr{background:linear-gradient(180deg,rgba(34,211,238,.06),rgba(168,85,247,.04));
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;margin-bottom:8px}
+.tldr h2{margin-bottom:12px}
+.tldr ul{margin:0;max-width:none}
+.tldr li{margin-bottom:9px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;margin:16px 0}
+.callout{position:relative;padding:16px 20px;border-radius:14px;margin:18px 0;
+  background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.callout.bad::before{background:var(--bad)} .callout.warn::before{background:var(--warn)}
+.callout.good::before{background:var(--good)} .callout.alt::before{background:var(--accent-2)}
+.callout h4{margin:0 0 6px} .callout p:last-child{margin-bottom:0}
+
+.tw{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:480px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td{color:#d5d9de}
+td b{color:#fff}
+
+pre{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:16px;
+  overflow-x:auto;margin:14px 0;font-size:13px;line-height:1.6}
+pre code{color:#d5d9de;border:none;padding:0;background:none;font-family:var(--mono)}
+
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;
+  border-radius:4px;padding:2px 6px;display:inline-block;border:1px solid var(--line)}
+.tag.keep{color:var(--good);border-color:rgba(52,211,153,.3)}
+.tag.rebuild{color:var(--accent);border-color:rgba(34,211,238,.3)}
+.tag.defer{color:var(--muted)}
+.tag.cut{color:var(--bad);border-color:rgba(248,113,113,.3)}
+
+.folder-tree{font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--muted);margin:0}
+.folder-tree .folder{color:var(--accent);font-weight:600}
+.folder-tree .file{color:var(--muted)}
+.folder-tree .comment{color:#6b7280}
+
+.timeline{display:flex;flex-direction:column;gap:0;margin:20px 0}
+.tl-row{display:grid;grid-template-columns:130px 1fr;gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+.tl-row:first-child{border-top:none}
+.tl-date{font-family:var(--mono);font-size:11.5px;color:var(--accent);padding-top:2px}
+.tl-body b{display:block;font-size:14.5px;color:#fff;margin-bottom:4px}
+.tl-body p{margin-bottom:0;font-size:13.5px}
+.tl-row.mandatory .tl-date{color:var(--warn)}
+.tl-row.pilot .tl-date{color:var(--accent-2)}
+.tl-row.pitch .tl-date{color:var(--bad)}
+
+.kw{color:var(--accent-2)} .str{color:var(--good)} .cm{color:#6b7280} .fn{color:var(--warn)} .tp{color:var(--accent)}
+
+footer.foot{border-top:1px solid var(--line);margin-top:12px;padding-top:22px;color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="eyebrow">Syntaxure Labs · Merged Migration Plan · 09 September 2026</span>
+  <h1>RiceConnect — Merged Migration Plan</h1>
+  <p class="sub">Combines the competition-scoped operational plan (riceconnect-migration-plan.html) with the technical depth of the full blueprint (MIGRATION_PLAN.html). Plan B's scope cuts and calendar are the authority; Plan A's code patterns, folder structure, and component maps fill the gaps.</p>
+  <div class="meta-row">
+    <span class="chip m">From: rice-connect-v2 (Laravel 12 / Inertia / React / Render)</span>
+    <span class="chip">To: Next.js + Supabase + Prisma + Vercel</span>
+    <span class="chip w">11 dev days before capacity-building block</span>
+  </div>
+</header>
+
+<!-- ======================== TL;DR ======================== -->
+<section class="tldr">
+  <h2><span class="n">TL;DR</span></h2>
+  <ul>
+    <li>This is a <strong>port</strong>, not a rebuild. Karl's Laravel repo is a working spec of the domain model. Speed advantage assumed.</li>
+    <li><strong>Sep 9 – Sep 20</strong> is the entire dev runway. 11 days to port: Farmer + Miller + Ledger + Auth + Market Price Board. Retailer, Driver, Analytics deferred.</li>
+    <li>The ledger is the load-bearing piece. A sloppy port costs someone real money. Prisma <code>$transaction</code> + atomic <code>increment</code>/<code>decrement</code> replaces Laravel's <code>DB::transaction</code>.</li>
+    <li>Auth enforcement: <strong>app-layer role check</strong> in Next.js middleware + API routes. Not RLS — Prisma bypasses RLS, making it a false sense of security.</li>
+    <li>Notifications: <strong>synchronous send</strong> in API routes. No queue, no DB triggers. Four notification types at pilot scale don't need infrastructure.</li>
+    <li>Branch convention: <code>main</code> + <code>development</code>, matching LikasLens. Vercel builds gated to these branches.</li>
+  </ul>
+</section>
+
+<!-- ======================== TARGET STACK ======================== -->
+<section>
+  <h2><span class="n">1</span>Target Stack</h2>
+  <div class="tw">
+    <table>
+      <tr><th>Layer</th><th>Decision</th><th>Why</th></tr>
+      <tr><td>Framework</td><td>Next.js 14+ (App Router)</td><td>Team default; matches LikasLens</td></tr>
+      <tr><td>DB access</td><td>Prisma</td><td>Team default. RLS is not the auth boundary when querying through Prisma</td></tr>
+      <tr><td>Auth</td><td>Supabase Auth</td><td>Email/password for 5 known roles; no heavier solution needed</td></tr>
+      <tr><td>Authorization</td><td>App-layer role check (middleware + API routes)</td><td>Mirrors Karl's <code>RoleMiddleware</code>. Prisma bypasses RLS — don't rely on it</td></tr>
+      <tr><td>File storage</td><td>Supabase Storage (private bucket, signed URLs)</td><td>Fixes the ephemeral-disk gap before weigh-slip upload is built</td></tr>
+      <tr><td>Notifications</td><td>Synchronous send in API routes</td><td>Avoids cold-start and queue infrastructure. Scale later if needed</td></tr>
+      <tr><td>Hosting</td><td>Vercel</td><td>No idle spin-down. Confirm Hobby tier terms for commercial use before pilot</td></tr>
+      <tr><td>Styling</td><td>Tailwind CSS (same classes)</td><td>rc-theme.css copied verbatim; pixel-identical rendering</td></tr>
+      <tr><td>State</td><td>Server Components + @tanstack/react-query</td><td>Replaces Inertia server props + partial reloads</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ======================== SCOPE CUT ======================== -->
+<section>
+  <h2><span class="n">2</span>Scope Cut — What Ports Now vs. What Waits</h2>
+  <p>Porting everything is a 4–6 week job. You have 11 days. The cut below keeps everything the pitch and pilot need; everything the rubric doesn't ask for yet is deferred.</p>
+  <div class="tw">
+    <table>
+      <tr><th>Domain area</th><th>Source (Laravel)</th><th>Call</th></tr>
+      <tr><td>Auth + role routing</td><td><code>RoleMiddleware</code>, module route groups</td><td><span class="tag keep">Port now</span></td></tr>
+      <tr><td>Farmer: harvest CRUD + offers</td><td><code>Modules/Farmer</code></td><td><span class="tag keep">Port now</span></td></tr>
+      <tr><td>Miller: marketplace, incoming, inventory, transport</td><td><code>Modules/Miller</code></td><td><span class="tag keep">Port now</span></td></tr>
+      <tr><td>Wallet + Ledger (money integrity)</td><td><code>PaymentService</code>, <code>Wallet</code>, <code>LedgerEntry</code></td><td><span class="tag keep">Port now — highest priority</span></td></tr>
+      <tr><td>Market price board</td><td><code>MarketPrice</code></td><td><span class="tag keep">Port now — pitch's public-trust artifact</span></td></tr>
+      <tr><td>Weigh-slip / settlement photo</td><td>Not built in Laravel</td><td><span class="tag rebuild">Build fresh — Supabase Storage day 1</span></td></tr>
+      <tr><td>Notifications (4 pilot types)</td><td><code>app/Notifications</code></td><td><span class="tag rebuild">Port logic, synchronous send</span></td></tr>
+      <tr><td>MillerAdmin global dashboard</td><td><code>Modules/MillerAdmin</code></td><td><span class="tag defer">Minimal version only — pilot enough</span></td></tr>
+      <tr><td>Retailer module</td><td><code>Modules/Retailer</code></td><td><span class="tag cut">Out of v1 — no retailer in pilot cohort</span></td></tr>
+      <tr><td>Driver module + logistics</td><td><code>Modules/Driver</code></td><td><span class="tag cut">Out of v1 — no delivery leg in 2–3 buyer pilot</span></td></tr>
+      <tr><td>Analytics dashboards</td><td>All analytics tables</td><td><span class="tag defer">Post-competition — not load-bearing for pitch</span></td></tr>
+    </table>
+  </div>
+  <div class="callout warn">
+    <h4>This cut is a recommendation, not a final decision</h4>
+    <p style="margin-bottom:0">If Retailer or Driver are part of the pilot cohort, they move back into scope. Cutting them based on the pilot shape described in the competition-readiness plan.</p>
+  </div>
+</section>
+
+<!-- ======================== PRISMA SCHEMA ======================== -->
+<section>
+  <h2><span class="n">3</span>Prisma Schema — In-Scope Tables</h2>
+  <p>The authoritative schema for the port. Maps the domain tables from the Laravel migrations. Only "Port Now" tables are detailed here; deferred tables get minimal models for FK references.</p>
+
+  <h3>3.1 Core Domain Schema</h3>
+  <pre><code><span class="cm">// prisma/schema.prisma</span>
+
+<span class="kw">generator</span> client {
+  provider = <span class="str">"prisma-client-js"</span>
+}
+
+<span class="kw">datasource</span> db {
+  provider = <span class="str">"postgresql"</span>
+  url      = <span class="fn">env</span>(<span class="str">"DATABASE_URL"</span>)
+}
+
+<span class="cm">// ─── USERS ───────────────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">User</span> {
+  id                <span class="tp">String</span>   <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">uuid</span>())
+  email             <span class="tp">String</span>   <span class="kw">@unique</span>
+  username          <span class="tp">String</span>?  <span class="kw">@unique</span>
+  firstName         <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"first_name"</span>)
+  lastName          <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"last_name"</span>)
+  contact           <span class="tp">String</span>
+  role              <span class="tp">Role</span>     <span class="kw">@default</span>(<span class="fn">FARMER</span>)
+  municipality      <span class="tp">String</span>?
+  province          <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"Iloilo"</span>)
+  phoneNumber       <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"phone_number"</span>)
+  municipalityId    <span class="tp">Int</span>?     <span class="kw">@map</span>(<span class="str">"municipality_id"</span>)
+  vehicleType       <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"vehicle_type"</span>)
+  licenseNumber     <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"license_number"</span>)
+  isVerifiedDriver  <span class="tp">Boolean</span>  <span class="kw">@default</span>(<span class="fn">false</span>) <span class="kw">@map</span>(<span class="str">"is_verified_driver"</span>)
+  createdAt         <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt         <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  <span class="cm">// Relations</span>
+  municipalityRef   <span class="tp">Municipality</span>?   <span class="kw">@relation</span>(fields: [municipalityId], references: [id], onDelete: <span class="fn">SetNull</span>)
+  wallet            <span class="tp">Wallet</span>?
+  ledgerEntries     <span class="tp">LedgerEntry</span>[]
+  harvestBatches    <span class="tp">HarvestBatch</span>[]  <span class="kw">@relation</span>(<span class="str">"FarmerHarvests"</span>)
+  acceptedBatches   <span class="tp">HarvestBatch</span>[]  <span class="kw">@relation</span>(<span class="str">"AcceptedMiller"</span>)
+  harvestInterests  <span class="tp">HarvestInterest</span>[]
+  finishedStocks    <span class="tp">FinishedRiceStock</span>[]
+  deliverySettings  <span class="tp">MillerDeliverySetting</span>?
+  processingLogs    <span class="tp">MillerProcessingLog</span>[]
+  storageCapacity   <span class="tp">MillerStorageCapacity</span>?
+  millingQueues     <span class="tp">MillingQueue</span>[]
+  millerFleet       <span class="tp">MillerDriver</span>[]  <span class="kw">@relation</span>(<span class="str">"MillerFleet"</span>)
+  driverFleet       <span class="tp">MillerDriver</span>[]  <span class="kw">@relation</span>(<span class="str">"DriverFleet"</span>)
+  bookings          <span class="tp">Booking</span>[]
+  notifications     <span class="tp">Notification</span>[]
+
+  <span class="kw">@@map</span>(<span class="str">"users"</span>)
+}
+
+<span class="kw">enum</span> <span class="tp">Role</span> {
+  ADMIN
+  FARMER
+  MILLER
+  RETAILER
+  DRIVER
+}
+
+<span class="cm">// ─── MUNICIPALITIES ──────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">Municipality</span> {
+  id            <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  name          <span class="tp">String</span>   <span class="kw">@unique</span>
+  distanceIndex <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"distance_index"</span>)
+  createdAt     <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt     <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  users         <span class="tp">User</span>[]
+  deliverySettings <span class="tp">MillerDeliverySetting</span>[]
+
+  <span class="kw">@@map</span>(<span class="str">"municipalities"</span>)
+}
+
+<span class="cm">// ─── HARVEST BATCHES ─────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">HarvestBatch</span> {
+  id                  <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  userId              <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"user_id"</span>)
+  buyerId             <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"buyer_id"</span>)
+  driverId            <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"driver_id"</span>)
+  location            <span class="tp">String</span>?
+  riceVariety         <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"rice_variety"</span>)
+  condition           <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"fresh"</span>)
+  numberOfBags        <span class="tp">Int</span>      <span class="kw">@default</span>(0) <span class="kw">@map</span>(<span class="str">"number_of_bags"</span>)
+  totalWeight         <span class="tp">Decimal</span>  <span class="kw">@db.Decimal</span>(8, 2) <span class="kw">@map</span>(<span class="str">"total_weight"</span>)
+  actualWeightKg      <span class="tp">Decimal</span>? <span class="kw">@db.Decimal</span>(10, 2) <span class="kw">@map</span>(<span class="str">"actual_weight_kg"</span>)
+  unpackedWeightKg    <span class="tp">Decimal</span>? <span class="kw">@db.Decimal</span>(8, 2) <span class="kw">@map</span>(<span class="str">"unpacked_weight_kg"</span>)
+  pricePerKg          <span class="tp">Decimal</span>? <span class="kw">@db.Decimal</span>(8, 2) <span class="kw">@map</span>(<span class="str">"price_per_kg"</span>)
+  suggestedPricePerKg <span class="tp">Decimal</span>? <span class="kw">@db.Decimal</span>(10, 2) <span class="kw">@map</span>(<span class="str">"suggested_price_per_kg"</span>)
+  finalPricePerKg     <span class="tp">Decimal</span>? <span class="kw">@db.Decimal</span>(10, 2) <span class="kw">@map</span>(<span class="str">"final_price_per_kg"</span>)
+  pricePerSack        <span class="tp">Decimal</span>? <span class="kw">@db.Decimal</span>(8, 2) <span class="kw">@map</span>(<span class="str">"price_per_sack"</span>)
+  totalSacks          <span class="tp">Int</span>      <span class="kw">@default</span>(0) <span class="kw">@map</span>(<span class="str">"total_sacks"</span>)
+  harvestDate         <span class="tp">DateTime</span> <span class="kw">@map</span>(<span class="str">"harvest_date"</span>)
+  scheduledPickupDate <span class="tp">DateTime</span>? <span class="kw">@map</span>(<span class="str">"scheduled_pickup_date"</span>)
+  routeSequence       <span class="tp">Int</span>?     <span class="kw">@map</span>(<span class="str">"route_sequence"</span>)
+  status              <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"unsold"</span>)
+  dryingStatus        <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"drying_status"</span>)
+  deliveryMethod      <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"delivery_method"</span>)
+  deliveryStatus      <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"Pending"</span>) <span class="kw">@map</span>(<span class="str">"delivery_status"</span>)
+  deliveryType        <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"palay"</span>) <span class="kw">@map</span>(<span class="str">"delivery_type"</span>)
+  hiddenFromFarmer    <span class="tp">Boolean</span>  <span class="kw">@default</span>(<span class="fn">false</span>) <span class="kw">@map</span>(<span class="str">"hidden_from_farmer"</span>)
+  hiddenAt            <span class="tp">DateTime</span>? <span class="kw">@map</span>(<span class="str">"hidden_at"</span>)
+  acceptedMillerId    <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"accepted_miller_id"</span>)
+  createdAt           <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt           <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  farmer              <span class="tp">User</span>             <span class="kw">@relation</span>(<span class="str">"FarmerHarvests"</span>, fields: [userId], references: [id], onDelete: <span class="fn">Cascade</span>)
+  acceptedMiller      <span class="tp">User</span>?            <span class="kw">@relation</span>(<span class="str">"AcceptedMiller"</span>, fields: [acceptedMillerId], references: [id], onDelete: <span class="fn">SetNull</span>)
+  interests           <span class="tp">HarvestInterest</span>[]
+  bookings            <span class="tp">Booking</span>[]
+
+  <span class="kw">@@index</span>([deliveryType])
+  <span class="kw">@@map</span>(<span class="str">"harvest_batches"</span>)
+}
+
+<span class="cm">// ─── HARVEST INTERESTS ───────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">HarvestInterest</span> {
+  id        <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  harvestId <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"harvest_id"</span>)
+  millerId  <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"miller_id"</span>)
+  createdAt <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  harvest   <span class="tp">HarvestBatch</span> <span class="kw">@relation</span>(fields: [harvestId], references: [id], onDelete: <span class="fn">Cascade</span>)
+  miller    <span class="tp">User</span>         <span class="kw">@relation</span>(fields: [millerId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@unique</span>([harvestId, millerId])
+  <span class="kw">@@map</span>(<span class="str">"harvest_interests"</span>)
+}
+
+<span class="cm">// ─── WALLETS ─────────────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">Wallet</span> {
+  id        <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  userId    <span class="tp">String</span>   <span class="kw">@unique</span> <span class="kw">@map</span>(<span class="str">"user_id"</span>)
+  balance   <span class="tp">Decimal</span>  <span class="kw">@default</span>(0) <span class="kw">@db.Decimal</span>(15, 2)
+  createdAt <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  user      <span class="tp">User</span> <span class="kw">@relation</span>(fields: [userId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@map</span>(<span class="str">"wallets"</span>)
+}
+
+<span class="cm">// ─── LEDGER ENTRIES ──────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">LedgerEntry</span> {
+  id            <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  userId        <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"user_id"</span>)
+  amount        <span class="tp">Decimal</span>  <span class="kw">@db.Decimal</span>(15, 2)
+  type          <span class="tp">String</span>   <span class="cm">// 'credit' | 'debit'</span>
+  referenceType <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"reference_type"</span>)
+  referenceId   <span class="tp">Int</span>?     <span class="kw">@map</span>(<span class="str">"reference_id"</span>)
+  description   <span class="tp">String</span>
+  createdAt     <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt     <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  user          <span class="tp">User</span> <span class="kw">@relation</span>(fields: [userId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@unique</span>([referenceType, referenceId, userId, type], name: <span class="str">"ledger_entries_ref_user_type_unique"</span>)
+  <span class="kw">@@map</span>(<span class="str">"ledger_entries"</span>)
+}
+
+<span class="cm">// ─── FINISHED RICE STOCKS ────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">FinishedRiceStock</span> {
+  id                <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  millerId          <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"miller_id"</span>)
+  riceVariety       <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"rice_variety"</span>)
+  totalSacks        <span class="tp">Int</span>      <span class="kw">@default</span>(0) <span class="kw">@map</span>(<span class="str">"total_sacks"</span>)
+  unpackedWeightKg  <span class="tp">Decimal</span>  <span class="kw">@default</span>(0) <span class="kw">@db.Decimal</span>(8, 2) <span class="kw">@map</span>(<span class="str">"unpacked_weight_kg"</span>)
+  pricePerSack      <span class="tp">Decimal</span>? <span class="kw">@db.Decimal</span>(8, 2) <span class="kw">@map</span>(<span class="str">"price_per_sack"</span>)
+  lowStockThreshold <span class="tp">Int</span>      <span class="kw">@default</span>(50) <span class="kw">@map</span>(<span class="str">"low_stock_threshold"</span>)
+  createdAt         <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt         <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  miller            <span class="tp">User</span> <span class="kw">@relation</span>(fields: [millerId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@map</span>(<span class="str">"finished_rice_stocks"</span>)
+}
+
+<span class="cm">// ─── MARKET PRICES ───────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">MarketPrice</span> {
+  id           <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  riceVariety  <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"rice_variety"</span>)
+  pricePerKg   <span class="tp">Decimal</span>  <span class="kw">@db.Decimal</span>(10, 2) <span class="kw">@map</span>(<span class="str">"price_per_kg"</span>)
+  marketRegion <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"market_region"</span>)
+  priceDate    <span class="tp">DateTime</span> <span class="kw">@map</span>(<span class="str">"price_date"</span>)
+  createdAt    <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt    <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  <span class="kw">@@index</span>([riceVariety, priceDate])
+  <span class="kw">@@map</span>(<span class="str">"market_prices"</span>)
+}
+
+<span class="cm">// ─── BOOKINGS ────────────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">Booking</span> {
+  id                <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  bookableType      <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"bookable_type"</span>)
+  bookableId        <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"bookable_id"</span>)
+  originAddress     <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"origin_address"</span>)
+  destinationAddress <span class="tp">String</span>  <span class="kw">@map</span>(<span class="str">"destination_address"</span>)
+  totalWeightKg     <span class="tp">Decimal</span>  <span class="kw">@db.Decimal</span>(8, 2) <span class="kw">@map</span>(<span class="str">"total_weight_kg"</span>)
+  estimatedSacks    <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"estimated_sacks"</span>)
+  driverId          <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"driver_id"</span>)
+  status            <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"pending"</span>)
+  orderId           <span class="tp">Int</span>?     <span class="kw">@map</span>(<span class="str">"order_id"</span>)
+  harvestBatchId    <span class="tp">Int</span>?     <span class="kw">@map</span>(<span class="str">"harvest_batch_id"</span>)
+  createdAt         <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt         <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  driver            <span class="tp">User</span>?         <span class="kw">@relation</span>(fields: [driverId], references: [id], onDelete: <span class="fn">SetNull</span>)
+  harvestBatch      <span class="tp">HarvestBatch</span>? <span class="kw">@relation</span>(fields: [harvestBatchId], references: [id], onDelete: <span class="fn">SetNull</span>)
+
+  <span class="kw">@@index</span>([bookableType, bookableId])
+  <span class="kw">@@map</span>(<span class="str">"bookings"</span>)
+}
+
+<span class="cm">// ─── NOTIFICATIONS ───────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">Notification</span> {
+  id               <span class="tp">String</span>   <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">uuid</span>())
+  type             <span class="tp">String</span>
+  notifiableType   <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"notifiable_type"</span>)
+  notifiableId     <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"notifiable_id"</span>)
+  data             <span class="tp">Json</span>
+  notificationStatus <span class="tp">String</span> <span class="kw">@default</span>(<span class="str">"unread"</span>) <span class="kw">@map</span>(<span class="str">"notification_status"</span>)
+  readAt           <span class="tp">DateTime</span>? <span class="kw">@map</span>(<span class="str">"read_at"</span>)
+  createdAt        <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt        <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  user             <span class="tp">User</span>     <span class="kw">@relation</span>(fields: [notifiableId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@index</span>([notifiableType, notifiableId])
+  <span class="kw">@@map</span>(<span class="str">"notifications"</span>)
+}
+
+<span class="cm">// ─── MILLER DELIVERY SETTINGS ────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">MillerDeliverySetting</span> {
+  id                      <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  millerId                <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"miller_id"</span>)
+  baseDeliveryFee         <span class="tp">Decimal</span>  <span class="kw">@default</span>(150) <span class="kw">@db.Decimal</span>(10, 2) <span class="kw">@map</span>(<span class="str">"base_delivery_fee"</span>)
+  extraFeePerMunicipality <span class="tp">Decimal</span>  <span class="kw">@default</span>(50) <span class="kw">@db.Decimal</span>(10, 2) <span class="kw">@map</span>(<span class="str">"extra_fee_per_municipality"</span>)
+  municipalityId          <span class="tp">Int</span>?     <span class="kw">@map</span>(<span class="str">"municipality_id"</span>)
+  createdAt               <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt               <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  miller                  <span class="tp">User</span>         <span class="kw">@relation</span>(fields: [millerId], references: [id], onDelete: <span class="fn">Cascade</span>)
+  municipality            <span class="tp">Municipality</span>? <span class="kw">@relation</span>(fields: [municipalityId], references: [id], onDelete: <span class="fn">SetNull</span>)
+
+  <span class="kw">@@map</span>(<span class="str">"miller_delivery_settings"</span>)
+}
+
+<span class="cm">// ─── MILLER-DRIVER PIVOT ─────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">MillerDriver</span> {
+  id        <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  millerId  <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"miller_id"</span>)
+  driverId  <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"driver_id"</span>)
+  isActive  <span class="tp">Boolean</span>  <span class="kw">@default</span>(<span class="fn">true</span>) <span class="kw">@map</span>(<span class="str">"is_active"</span>)
+  createdAt <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  miller    <span class="tp">User</span> <span class="kw">@relation</span>(<span class="str">"MillerFleet"</span>, fields: [millerId], references: [id], onDelete: <span class="fn">Cascade</span>)
+  driver    <span class="tp">User</span> <span class="kw">@relation</span>(<span class="str">"DriverFleet"</span>, fields: [driverId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@unique</span>([millerId, driverId])
+  <span class="kw">@@map</span>(<span class="str">"miller_driver"</span>)
+}
+
+<span class="cm">// ─── MILLER PROCESSING LOGS ──────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">MillerProcessingLog</span> {
+  id                   <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  userId               <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"user_id"</span>)
+  inputPalayKg         <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"input_palay_kg"</span>)
+  outputRiceKg         <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"output_rice_kg"</span>)
+  huskWasteKg          <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"husk_waste_kg"</span>)
+  recoveryRate         <span class="tp">Decimal</span>  <span class="kw">@db.Decimal</span>(5, 2) <span class="kw">@map</span>(<span class="str">"recovery_rate"</span>)
+  processingEfficiency <span class="tp">Decimal</span>  <span class="kw">@default</span>(0) <span class="kw">@db.Decimal</span>(5, 2) <span class="kw">@map</span>(<span class="str">"processing_efficiency"</span>)
+  processingStart      <span class="tp">DateTime</span> <span class="kw">@map</span>(<span class="str">"processing_start"</span>)
+  processingEnd        <span class="tp">DateTime</span>? <span class="kw">@map</span>(<span class="str">"processing_end"</span>)
+  status               <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"processing"</span>)
+  createdAt            <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt            <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  user                 <span class="tp">User</span> <span class="kw">@relation</span>(fields: [userId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@index</span>([userId, status])
+  <span class="kw">@@map</span>(<span class="str">"miller_processing_logs"</span>)
+}
+
+<span class="cm">// ─── MILLER STORAGE CAPACITY ─────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">MillerStorageCapacity</span> {
+  id                 <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  userId             <span class="tp">String</span>   <span class="kw">@unique</span> <span class="kw">@map</span>(<span class="str">"user_id"</span>)
+  totalCapacityKg    <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"total_capacity_kg"</span>)
+  currentStockKg     <span class="tp">Int</span>      <span class="kw">@default</span>(0) <span class="kw">@map</span>(<span class="str">"current_stock_kg"</span>)
+  availableCapacityKg <span class="tp">Int</span>     <span class="kw">@default</span>(0) <span class="kw">@map</span>(<span class="str">"available_capacity_kg"</span>)
+  utilizationRate    <span class="tp">Decimal</span>  <span class="kw">@default</span>(0) <span class="kw">@db.Decimal</span>(5, 2) <span class="kw">@map</span>(<span class="str">"utilization_rate"</span>)
+  createdAt          <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt          <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  user               <span class="tp">User</span> <span class="kw">@relation</span>(fields: [userId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@map</span>(<span class="str">"miller_storage_capacity"</span>)
+}
+
+<span class="cm">// ─── MILLING QUEUES ──────────────────────────────────────</span>
+<span class="kw">model</span> <span class="tp">MillingQueue</span> {
+  id                   <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  millerId             <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"miller_id"</span>)
+  palayKg              <span class="tp">Int</span>      <span class="kw">@map</span>(<span class="str">"palay_kg"</span>)
+  status               <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"pending"</span>)
+  priority             <span class="tp">Int</span>      <span class="kw">@default</span>(5)
+  queuedAt             <span class="tp">DateTime</span> <span class="kw">@map</span>(<span class="str">"queued_at"</span>)
+  processingStartedAt  <span class="tp">DateTime</span>? <span class="kw">@map</span>(<span class="str">"processing_started_at"</span>)
+  completedAt          <span class="tp">DateTime</span>? <span class="kw">@map</span>(<span class="str">"completed_at"</span>)
+  createdAt            <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt            <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  miller               <span class="tp">User</span> <span class="kw">@relation</span>(fields: [millerId], references: [id], onDelete: <span class="fn">Cascade</span>)
+
+  <span class="kw">@@index</span>([millerId, status])
+  <span class="kw">@@map</span>(<span class="str">"milling_queues"</span>)
+}
+
+<span class="cm">// ─── ORDERS (deferred, minimal model for FK references) ──</span>
+<span class="kw">model</span> <span class="tp">Order</span> {
+  id             <span class="tp">Int</span>      <span class="kw">@id</span> <span class="kw">@default</span>(<span class="fn">autoincrement</span>())
+  retailerId     <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"retailer_id"</span>)
+  millerId       <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"miller_id"</span>)
+  stockId        <span class="tp">Int</span>?     <span class="kw">@map</span>(<span class="str">"stock_id"</span>)
+  driverId       <span class="tp">String</span>?  <span class="kw">@map</span>(<span class="str">"driver_id"</span>)
+  riceVariety    <span class="tp">String</span>   <span class="kw">@map</span>(<span class="str">"rice_variety"</span>)
+  sacks          <span class="tp">Int</span>
+  totalWeight    <span class="tp">Decimal</span>  <span class="kw">@db.Decimal</span>(10, 2) <span class="kw">@map</span>(<span class="str">"total_weight"</span>)
+  totalPrice     <span class="tp">Decimal</span>  <span class="kw">@db.Decimal</span>(15, 2) <span class="kw">@map</span>(<span class="str">"total_price"</span>)
+  status         <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"pending_pickup"</span>)
+  deliveryStatus <span class="tp">String</span>   <span class="kw">@default</span>(<span class="str">"Pending"</span>) <span class="kw">@map</span>(<span class="str">"delivery_status"</span>)
+  createdAt      <span class="tp">DateTime</span> <span class="kw">@default</span>(<span class="fn">now</span>()) <span class="kw">@map</span>(<span class="str">"created_at"</span>)
+  updatedAt      <span class="tp">DateTime</span> <span class="kw">@updatedAt</span> <span class="kw">@map</span>(<span class="str">"updated_at"</span>)
+
+  <span class="kw">@@map</span>(<span class="str">"orders"</span>)
+}</code></pre>
+
+  <h3>3.2 CHECK Constraints (Raw SQL Migration)</h3>
+  <p>Prisma doesn't express CHECK constraints natively. Add via a raw SQL migration step:</p>
+  <pre><code><span class="cm">-- migrations/20260909_add_check_constraints.sql</span>
+
+<span class="cm">-- Ledger: amount must be positive</span>
+<span class="kw">ALTER TABLE</span> ledger_entries
+  <span class="kw">ADD CONSTRAINT</span> ledger_amount_positive <span class="kw">CHECK</span> (amount > 0);
+
+<span class="cm">-- Bookings: weight and sacks must be non-negative</span>
+<span class="kw">ALTER TABLE</span> bookings
+  <span class="kw">ADD CONSTRAINT</span> bookings_non_negative
+  <span class="kw">CHECK</span> (total_weight_kg >= 0 AND estimated_sacks >= 0);</code></pre>
+</section>
+
+<!-- ======================== FOLDER STRUCTURE ======================== -->
+<section>
+  <h2><span class="n">4</span>Folder Structure</h2>
+  <p>Adapted for Prisma — no <code>lib/supabase/</code> for DB queries since Prisma replaces it. Supabase client only needed for Auth.</p>
+  <pre><code class="folder-tree"><span class="folder">src/</span>
+├── <span class="folder">app/</span>
+│   ├── <span class="folder">(auth)/</span>                        <span class="comment"># guest pages</span>
+│   │   ├── <span class="file">login/page.tsx</span>
+│   │   ├── <span class="file">register/page.tsx</span>
+│   │   ├── <span class="file">forgot-password/page.tsx</span>
+│   │   └── <span class="file">reset-password/page.tsx</span>
+│   ├── <span class="folder">(protected)/</span>                   <span class="comment"># authenticated routes</span>
+│   │   ├── <span class="file">layout.tsx</span>                   <span class="comment"># AuthenticatedLayout</span>
+│   │   ├── <span class="file">dashboard/page.tsx</span>
+│   │   ├── <span class="file">profile/page.tsx</span>
+│   │   ├── <span class="folder">farmer/</span>
+│   │   │   ├── <span class="file">harvest/page.tsx</span>
+│   │   │   ├── <span class="file">harvest/new/page.tsx</span>
+│   │   │   ├── <span class="file">harvest/[id]/edit/page.tsx</span>
+│   │   │   └── <span class="file">offers/page.tsx</span>
+│   │   ├── <span class="folder">miller/</span>
+│   │   │   ├── <span class="file">marketplace/page.tsx</span>
+│   │   │   ├── <span class="file">incoming/page.tsx</span>
+│   │   │   ├── <span class="file">inventory/page.tsx</span>
+│   │   │   ├── <span class="file">processed-inventory/page.tsx</span>
+│   │   │   ├── <span class="file">orders/page.tsx</span>
+│   │   │   ├── <span class="file">transport/page.tsx</span>
+│   │   │   └── <span class="file">shipping-settings/page.tsx</span>
+│   │   ├── <span class="folder">admin/</span>
+│   │   │   └── <span class="file">dashboard/page.tsx</span>
+│   │   └── <span class="folder">analytics/</span>
+│   │       └── <span class="file">market-prices/page.tsx</span>   <span class="comment"># pitch artifact only</span>
+│   ├── <span class="folder">api/</span>                           <span class="comment"># Next.js API routes</span>
+│   │   ├── <span class="folder">farmer/</span>
+│   │   │   ├── <span class="file">harvest/route.ts</span>
+│   │   │   ├── <span class="file">harvest/[id]/route.ts</span>
+│   │   │   └── <span class="file">offers/[id]/accept/route.ts</span>
+│   │   ├── <span class="folder">miller/</span>
+│   │   │   ├── <span class="file">marketplace/route.ts</span>
+│   │   │   ├── <span class="file">interest/route.ts</span>
+│   │   │   ├── <span class="file">inventory/[id]/route.ts</span>
+│   │   │   ├── <span class="file">transport/assign-driver/route.ts</span>
+│   │   │   └── <span class="file">shipping-settings/route.ts</span>
+│   │   ├── <span class="folder">bookings/</span>
+│   │   │   ├── <span class="file">[id]/accept/route.ts</span>
+│   │   │   └── <span class="file">[id]/status/route.ts</span>
+│   │   ├── <span class="folder">payments/</span>
+│   │   │   └── <span class="file">transfer/route.ts</span>
+│   │   ├── <span class="folder">notifications/</span>
+│   │   │   └── <span class="file">[id]/read/route.ts</span>
+│   │   └── <span class="folder">market-prices/</span>
+│   │       └── <span class="file">route.ts</span>
+│   ├── <span class="file">layout.tsx</span>                     <span class="comment"># root layout</span>
+│   └── <span class="file">page.tsx</span>                       <span class="comment"># landing page</span>
+├── <span class="folder">components/</span>
+│   ├── <span class="folder">ui/</span>                            <span class="comment"># shared primitives</span>
+│   │   ├── <span class="file">Modal.tsx</span>
+│   │   ├── <span class="file">Dropdown.tsx</span>
+│   │   ├── <span class="file">DeliveryStatusStepper.tsx</span>
+│   │   ├── <span class="file">PrimaryButton.tsx</span>
+│   │   ├── <span class="file">SecondaryButton.tsx</span>
+│   │   ├── <span class="file">DangerButton.tsx</span>
+│   │   ├── <span class="file">TextInput.tsx</span>
+│   │   ├── <span class="file">InputLabel.tsx</span>
+│   │   ├── <span class="file">InputError.tsx</span>
+│   │   ├── <span class="file">Checkbox.tsx</span>
+│   │   └── <span class="file">ApplicationLogo.tsx</span>
+│   ├── <span class="folder">layout/</span>
+│   │   ├── <span class="file">Sidebar.tsx</span>
+│   │   ├── <span class="file">Header.tsx</span>
+│   │   └── <span class="file">NotificationDropdown.tsx</span>
+│   └── <span class="folder">modules/</span>
+│       ├── <span class="folder">farmers/</span>
+│       │   ├── <span class="file">HarvestList.tsx</span>
+│       │   ├── <span class="file">HarvestForm.tsx</span>
+│       │   └── <span class="file">OffersList.tsx</span>
+│       └── <span class="folder">millers/</span>
+│           ├── <span class="file">MarketplaceGrid.tsx</span>
+│           ├── <span class="file">InventoryView.tsx</span>
+│           ├── <span class="file">TransportHub.tsx</span>
+│           └── <span class="file">FleetManagement.tsx</span>
+├── <span class="folder">lib/</span>
+│   ├── <span class="file">prisma.ts</span>                       <span class="comment"># singleton Prisma client</span>
+│   ├── <span class="file">payment.ts</span>                     <span class="comment"># ported PaymentService</span>
+│   ├── <span class="file">municipality.ts</span>                <span class="comment"># ported BFS algorithm</span>
+│   └── <span class="file">utils.ts</span>
+├── <span class="folder">types/</span>
+│   └── <span class="file">database.ts</span>                    <span class="comment"># generated Prisma types</span>
+├── <span class="folder">hooks/</span>
+│   ├── <span class="file">useUser.ts</span>
+│   └── <span class="file">useNotifications.ts</span>
+├── <span class="folder">stores/</span>
+│   └── <span class="file">sidebar.ts</span>                     <span class="comment"># zustand store</span>
+└── <span class="file">middleware.ts</span>                       <span class="comment"># Next.js auth guard</span></code></pre>
+</section>
+
+<!-- ======================== COMPONENT PORT MAP ======================== -->
+<section>
+  <h2><span class="n">5</span>Component Port Map</h2>
+  <p>Every shared UI component from the Laravel version and its Next.js equivalent. Most need zero changes.</p>
+  <div class="tw">
+    <table>
+      <tr><th>Laravel (Inertia)</th><th>Next.js</th><th>Changes Needed</th></tr>
+      <tr><td><code>AuthenticatedLayout.jsx</code></td><td><code>(protected)/layout.tsx</code></td><td>Replace Inertia <code>&lt;Link&gt;</code> with <code>next/link</code></td></tr>
+      <tr><td><code>GuestLayout.jsx</code></td><td><code>(auth)/layout.tsx</code></td><td>Minimal changes</td></tr>
+      <tr><td><code>Modal.jsx</code></td><td><code>components/ui/Modal.tsx</code></td><td>Keep @headlessui/react</td></tr>
+      <tr><td><code>Dropdown.jsx</code></td><td><code>components/ui/Dropdown.tsx</code></td><td>Keep compound component pattern</td></tr>
+      <tr><td><code>DeliveryStatusStepper.jsx</code></td><td><code>components/ui/DeliveryStatusStepper.tsx</code></td><td>Zero changes (pure presentational)</td></tr>
+      <tr><td><code>PrimaryButton.jsx</code></td><td><code>components/ui/PrimaryButton.tsx</code></td><td>Zero changes</td></tr>
+      <tr><td><code>SecondaryButton.jsx</code></td><td><code>components/ui/SecondaryButton.tsx</code></td><td>Zero changes</td></tr>
+      <tr><td><code>DangerButton.jsx</code></td><td><code>components/ui/DangerButton.tsx</code></td><td>Zero changes</td></tr>
+      <tr><td><code>TextInput.jsx</code></td><td><code>components/ui/TextInput.tsx</code></td><td>Zero changes</td></tr>
+      <tr><td><code>InputLabel.jsx</code></td><td><code>components/ui/InputLabel.tsx</code></td><td>Zero changes</td></tr>
+      <tr><td><code>InputError.jsx</code></td><td><code>components/ui/InputError.tsx</code></td><td>Zero changes</td></tr>
+      <tr><td><code>Checkbox.jsx</code></td><td><code>components/ui/Checkbox.tsx</code></td><td>Zero changes</td></tr>
+      <tr><td><code>ApplicationLogo.jsx</code></td><td><code>components/ui/ApplicationLogo.tsx</code></td><td>Zero changes</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ======================== PAGE CONVERSION PATTERN ======================== -->
+<section>
+  <h2><span class="n">6</span>Page Conversion Pattern</h2>
+  <p>Every Inertia page follows the same conversion: server-side data fetch in a Server Component, interactive parts extracted to Client Components.</p>
+
+  <h3>6.1 Before (Inertia + React)</h3>
+  <pre><code><span class="cm">// resources/js/Pages/Farmer/HarvestIndex.jsx</span>
+<span class="kw">import</span> AuthenticatedLayout <span class="kw">from</span> <span class="str">'@/Layouts/AuthenticatedLayout'</span>
+<span class="kw">import</span> { router } <span class="kw">from</span> <span class="str">'@inertiajs/react'</span>
+
+<span class="kw">export default function</span> <span class="fn">HarvestIndex</span>({ auth, batches }) {
+  <span class="kw">return</span> (
+    &lt;AuthenticatedLayout header={&lt;h2&gt;Harvests&lt;/h2&gt;}&gt;
+      {batches.map(batch =&gt; (
+        &lt;div key={batch.id}&gt;{batch.rice_variety}&lt;/div&gt;
+      ))}
+    &lt;/AuthenticatedLayout&gt;
+  )
+}</code></pre>
+
+  <h3>6.2 After (Next.js Server Component)</h3>
+  <pre><code><span class="cm">// src/app/(protected)/farmer/harvest/page.tsx</span>
+<span class="kw">import</span> { prisma } <span class="kw">from</span> <span class="str">'@/lib/prisma'</span>
+<span class="kw">import</span> { redirect } <span class="kw">from</span> <span class="str">'next/navigation'</span>
+<span class="kw">import</span> HarvestList <span class="kw">from</span> <span class="str">'@/components/modules/farmers/HarvestList'</span>
+
+<span class="kw">export default async function</span> <span class="fn">HarvestPage</span>() {
+  <span class="kw">const</span> batches = <span class="kw">await</span> prisma.harvestBatch.findMany({
+    where: { hiddenFromFarmer: <span class="fn">false</span> },
+    orderBy: { createdAt: <span class="str">'desc'</span> },
+    include: { farmer: <span class="fn">true</span>, interests: { include: { miller: <span class="fn">true</span> } } },
+  })
+
+  <span class="kw">return</span> &lt;HarvestList batches={batches} /&gt;
+}
+
+<span class="cm">// src/components/modules/farmers/HarvestList.tsx (Client Component)</span>
+<span class="str">'use client'</span>
+<span class="kw">export default function</span> <span class="fn">HarvestList</span>({ batches }) {
+  <span class="kw">return</span> (
+    &lt;div&gt;
+      {batches.map(batch =&gt; (
+        &lt;div key={batch.id}&gt;{batch.riceVariety}&lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  )
+}</code></pre>
+
+  <h3>6.3 In-Scope Page Map</h3>
+  <div class="tw">
+    <table>
+      <tr><th>Module</th><th>Current Page</th><th>Next.js Route</th><th>Type</th></tr>
+      <tr><td rowspan="4"><strong>Farmer</strong></td><td>HarvestIndex.jsx</td><td><code>/farmer/harvest</code></td><td>Server Component</td></tr>
+      <tr><td>CreateHarvest.jsx</td><td><code>/farmer/harvest/new</code></td><td>Server Action form</td></tr>
+      <tr><td>EditHarvest.jsx</td><td><code>/farmer/harvest/[id]/edit</code></td><td>Server Action form</td></tr>
+      <tr><td>Offers.jsx</td><td><code>/farmer/offers</code></td><td>Server + Realtime</td></tr>
+      <tr><td rowspan="6"><strong>Miller</strong></td><td>Marketplace.jsx</td><td><code>/miller/marketplace</code></td><td>Server Component</td></tr>
+      <tr><td>IncomingPalay.jsx</td><td><code>/miller/incoming</code></td><td>Server Component</td></tr>
+      <tr><td>Inventory.jsx</td><td><code>/miller/inventory</code></td><td>Server Component</td></tr>
+      <tr><td>ProcessedInventory.jsx</td><td><code>/miller/processed-inventory</code></td><td>Server Component</td></tr>
+      <tr><td>Transport.jsx</td><td><code>/miller/transport</code></td><td>Client Component</td></tr>
+      <tr><td>ShippingSettings.jsx</td><td><code>/miller/shipping-settings</code></td><td>Server Action</td></tr>
+      <tr><td><strong>Admin</strong></td><td>Dashboard.jsx</td><td><code>/admin/dashboard</code></td><td>Server Component</td></tr>
+      <tr><td><strong>Market</strong></td><td>—</td><td><code>/analytics/market-prices</code></td><td>Client (Recharts)</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ======================== AUTH & ROLE ENFORCEMENT ======================== -->
+<section>
+  <h2><span class="n">7</span>Auth &amp; Role Enforcement</h2>
+  <p>Supabase Auth handles identity. A <code>role</code> column on the user drives authorization, checked in Next.js middleware for page routes and again in each API route handler. This mirrors Karl's <code>RoleMiddleware</code> — single role-string check per route group.</p>
+  <div class="callout bad">
+    <h4>Do NOT use RLS as the enforcement layer</h4>
+    <p style="margin-bottom:0">Prisma typically connects with a service-role that bypasses RLS. RLS policies that Prisma silently bypasses are <em>worse</em> than no RLS — they look like protection and aren't.</p>
+  </div>
+
+  <h3>7.1 Next.js Middleware (Auth Guard)</h3>
+  <pre><code><span class="cm">// src/middleware.ts</span>
+<span class="kw">import</span> { createServerClient } <span class="kw">from</span> <span class="str">'@supabase/ssr'</span>
+<span class="kw">import</span> { NextResponse, type NextRequest } <span class="kw">from</span> <span class="str">'next/server'</span>
+
+<span class="kw">const</span> roleDashboard: Record&lt;<span class="tp">string</span>, <span class="tp">string</span>&gt; = {
+  farmer: <span class="str">'/farmer/harvest'</span>,
+  miller: <span class="str">'/miller/marketplace'</span>,
+  admin:  <span class="str">'/admin/dashboard'</span>,
+}
+
+<span class="kw">export async function</span> <span class="fn">middleware</span>(request: NextRequest) {
+  <span class="kw">let</span> supabaseResponse = NextResponse.next({ request })
+  <span class="kw">const</span> supabase = createServerClient(
+    process.env.<span class="tp">NEXT_PUBLIC_SUPABASE_URL</span>!,
+    process.env.<span class="tp">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>!,
+    { cookies: { getAll: () =&gt; request.cookies.getAll(), setAll: () =&gt; {} } }
+  )
+
+  <span class="kw">const</span> { data: { user } } = <span class="kw">await</span> supabase.auth.getUser()
+
+  <span class="cm">// Protected routes</span>
+  <span class="kw">if</span> (request.nextUrl.pathname.startsWith(<span class="str">'/(protected)'</span>)) {
+    <span class="kw">if</span> (!user) {
+      <span class="kw">return</span> NextResponse.redirect(<span class="kw">new</span> URL(<span class="str">'/login'</span>, request.url))
+    }
+  }
+
+  <span class="cm">// Guest routes → redirect to dashboard if logged in</span>
+  <span class="kw">if</span> (request.nextUrl.pathname.startsWith(<span class="str">'/(auth)'</span>) &amp;&amp; user) {
+    <span class="kw">const</span> { data: profile } = <span class="kw">await</span> supabase
+      .from(<span class="str">'users'</span>).select(<span class="str">'role'</span>).eq(<span class="str">'id'</span>, user.id).single()
+    <span class="kw">return</span> NextResponse.redirect(
+      <span class="kw">new</span> URL(roleDashboard[profile?.role] || <span class="str">'/dashboard'</span>, request.url)
+    )
+  }
+
+  <span class="kw">return</span> supabaseResponse
+}
+
+<span class="kw">export const</span> config = {
+  matcher: [<span class="str">'/(auth)/:path*'</span>, <span class="str">'/(protected)/:path*'</span>]
+}</code></pre>
+
+  <h3>7.2 Prisma Singleton</h3>
+  <pre><code><span class="cm">// src/lib/prisma.ts</span>
+<span class="kw">import</span> { PrismaClient } <span class="kw">from</span> <span class="str">'@prisma/client'</span>
+
+<span class="kw">const</span> globalForPrisma = globalThis <span class="kw">as unknown as</span> { prisma: PrismaClient }
+
+<span class="kw">export const</span> prisma = globalForPrisma.prisma || <span class="kw">new</span> PrismaClient()
+
+<span class="kw">if</span> (process.env.NODE_ENV !== <span class="str">'production'</span>) globalForPrisma.prisma = prisma</code></pre>
+</section>
+
+<!-- ======================== PAYMENT SERVICE ======================== -->
+<section>
+  <h2><span class="n">8</span>PaymentService → Prisma Transaction</h2>
+  <p>The invariant: <code>wallet.balance == sum(credits) - sum(debits)</code>, held by construction. The Laravel version uses <code>DB::transaction</code> + <code>increment</code>/<code>decrement</code>. The Prisma version uses <code>prisma.$transaction()</code> with atomic operations.</p>
+
+  <h3>8.1 Core Payment Logic</h3>
+  <pre><code><span class="cm">// src/lib/payment.ts</span>
+<span class="kw">import</span> { prisma } <span class="kw">from</span> <span class="str">'@/lib/prisma'</span>
+
+<span class="kw">type</span> <span class="tp">TransferOptions</span> = {
+  checkBalance?: <span class="tp">boolean</span>
+}
+
+<span class="kw">export async function</span> <span class="fn">transfer</span>(
+  fromUserId: <span class="tp">string</span>,
+  toUserId: <span class="tp">string</span>,
+  amount: <span class="tp">number</span>,
+  debitDescription: <span class="tp">string</span>,
+  creditDescription: <span class="tp">string</span>,
+  referenceType?: <span class="tp">string</span>,
+  referenceId?: <span class="tp">number</span>,
+  options: <span class="tp">TransferOptions</span> = {}
+): Promise&lt;<span class="tp">boolean</span>&gt; {
+  <span class="kw">if</span> (amount &lt;= 0) <span class="kw">throw new</span> Error(<span class="str">'Payment amount must be greater than zero.'</span>)
+  <span class="kw">if</span> (fromUserId === toUserId) <span class="kw">throw new</span> Error(<span class="str">'Cannot transfer money to the same user.'</span>)
+
+  <span class="kw">return</span> prisma.<span class="fn">$transaction</span>(<span class="kw">async</span> (tx) =&gt; {
+    <span class="cm">// Idempotency check</span>
+    <span class="kw">if</span> (referenceType &amp;&amp; referenceId) {
+      <span class="kw">const</span> existing = <span class="kw">await</span> tx.ledgerEntry.findFirst({
+        where: {
+          userId: fromUserId,
+          type: <span class="str">'debit'</span>,
+          referenceType,
+          referenceId,
+        },
+      })
+      <span class="kw">if</span> (existing) <span class="kw">return false</span>
+    }
+
+    <span class="cm">// Ensure wallets exist</span>
+    <span class="kw">await</span> tx.wallet.upsert({
+      where: { userId: fromUserId },
+      create: { userId: fromUserId, balance: 0 },
+      update: {},
+    })
+    <span class="kw">await</span> tx.wallet.upsert({
+      where: { userId: toUserId },
+      create: { userId: toUserId, balance: 0 },
+      update: {},
+    })
+
+    <span class="cm">// Check balance if required</span>
+    <span class="kw">if</span> (options.checkBalance) {
+      <span class="kw">const</span> senderWallet = <span class="kw">await</span> tx.wallet.findUnique({
+        where: { userId: fromUserId },
+      })
+      <span class="kw">if</span> (senderWallet &amp;&amp; senderWallet.balance.lessThan(amount)) {
+        <span class="kw">throw new</span> Error(<span class="str">'Insufficient funds.'</span>)
+      }
+    }
+
+    <span class="cm">// Atomic debit + credit</span>
+    <span class="kw">await</span> tx.wallet.update({
+      where: { userId: fromUserId },
+      data: { balance: { decrement: amount } },
+    })
+    <span class="kw">await</span> tx.wallet.update({
+      where: { userId: toUserId },
+      data: { balance: { increment: amount } },
+    })
+
+    <span class="cm">// Write ledger entries</span>
+    <span class="kw">await</span> tx.ledgerEntry.createMany({
+      data: [
+        {
+          userId: fromUserId,
+          amount,
+          type: <span class="str">'debit'</span>,
+          referenceType: referenceType || <span class="fn">null</span>,
+          referenceId: referenceId || <span class="fn">null</span>,
+          description: debitDescription,
+        },
+        {
+          userId: toUserId,
+          amount,
+          type: <span class="str">'credit'</span>,
+          referenceType: referenceType || <span class="fn">null</span>,
+          referenceId: referenceId || <span class="fn">null</span>,
+          description: creditDescription,
+        },
+      ],
+    })
+
+    <span class="kw">return true</span>
+  })
+}</code></pre>
+
+  <h3>8.2 Usage from Server Actions</h3>
+  <pre><code><span class="cm">// In a Server Action or API route:</span>
+<span class="kw">import</span> { transfer } <span class="kw">from</span> <span class="str">'@/lib/payment'</span>
+
+<span class="cm">// Miller pays Farmer for harvest batch #123</span>
+<span class="kw">await</span> <span class="fn">transfer</span>(
+  millerId,
+  farmerId,
+  totalPayment,
+  <span class="str">'Payment for Harvest Batch #123'</span>,
+  <span class="str">'Payment received for Harvest Batch #123'</span>,
+  <span class="str">'HarvestBatch'</span>,
+  123
+)</code></pre>
+</section>
+
+<!-- ======================== MUNICIPALITY BFS ======================== -->
+<section>
+  <h2><span class="n">9</span>Municipality BFS Utility</h2>
+  <p>Port the static adjacency graph + BFS algorithm as a pure TypeScript utility. No database needed — the graph is hardcoded.</p>
+  <pre><code><span class="cm">// src/lib/municipality.ts</span>
+
+<span class="kw">const</span> iloiloNeighbors: Record&lt;<span class="tp">string</span>, <span class="tp">string</span>[]&gt; = {
+  <span class="str">"Passi City"</span>: [<span class="str">"San Enrique"</span>, <span class="str">"Dueñas"</span>, <span class="str">"Dumarao"</span>, <span class="str">"Calinog"</span>, <span class="str">"Mina"</span>, <span class="str">"Bingawan"</span>],
+  <span class="str">"San Enrique"</span>: [<span class="str">"Passi City"</span>, <span class="str">"Dueñas"</span>, <span class="str">"Banate"</span>, <span class="str">"Barotac Nuevo"</span>],
+  <span class="str">"Dueñas"</span>: [<span class="str">"Passi City"</span>, <span class="str">"San Enrique"</span>, <span class="str">"Dingle"</span>, <span class="str">"Pototan"</span>],
+  <span class="str">"Calinog"</span>: [<span class="str">"Passi City"</span>, <span class="str">"Bingawan"</span>, <span class="str">"Lambunao"</span>],
+  <span class="str">"Bingawan"</span>: [<span class="str">"Calinog"</span>, <span class="str">"Passi City"</span>],
+  <span class="str">"Lambunao"</span>: [<span class="str">"Calinog"</span>, <span class="str">"Janiuay"</span>, <span class="str">"Badiangan"</span>, <span class="str">"Maasin"</span>],
+  <span class="str">"Badiangan"</span>: [<span class="str">"Lambunao"</span>, <span class="str">"Janiuay"</span>, <span class="str">"Mina"</span>, <span class="str">"Pototan"</span>],
+  <span class="str">"Janiuay"</span>: [<span class="str">"Lambunao"</span>, <span class="str">"Badiangan"</span>, <span class="str">"Maasin"</span>, <span class="str">"Mina"</span>],
+  <span class="str">"Maasin"</span>: [<span class="str">"Janiuay"</span>, <span class="str">"Lambunao"</span>, <span class="str">"Alimodian"</span>, <span class="str">"Cabatuan"</span>],
+  <span class="str">"Pototan"</span>: [<span class="str">"Dueñas"</span>, <span class="str">"Dingle"</span>, <span class="str">"Barotac Nuevo"</span>, <span class="str">"Mina"</span>, <span class="str">"Badiangan"</span>, <span class="str">"New Lucena"</span>, <span class="str">"Zarraga"</span>],
+  <span class="str">"Dingle"</span>: [<span class="str">"Dueñas"</span>, <span class="str">"Pototan"</span>, <span class="str">"Barotac Nuevo"</span>, <span class="str">"Anilao"</span>],
+  <span class="str">"Mina"</span>: [<span class="str">"Pototan"</span>, <span class="str">"Badiangan"</span>, <span class="str">"Janiuay"</span>, <span class="str">"Cabatuan"</span>],
+  <span class="str">"Cabatuan"</span>: [<span class="str">"Mina"</span>, <span class="str">"Maasin"</span>, <span class="str">"Janiuay"</span>, <span class="str">"New Lucena"</span>, <span class="str">"Santa Barbara"</span>, <span class="str">"Alimodian"</span>],
+  <span class="str">"New Lucena"</span>: [<span class="str">"Cabatuan"</span>, <span class="str">"Pototan"</span>, <span class="str">"Santa Barbara"</span>, <span class="str">"Zarraga"</span>],
+  <span class="str">"Santa Barbara"</span>: [<span class="str">"Cabatuan"</span>, <span class="str">"New Lucena"</span>, <span class="str">"Pavia"</span>, <span class="str">"Zarraga"</span>, <span class="str">"San Miguel"</span>, <span class="str">"Alimodian"</span>],
+  <span class="str">"Zarraga"</span>: [<span class="str">"New Lucena"</span>, <span class="str">"Pototan"</span>, <span class="str">"Santa Barbara"</span>, <span class="str">"Leganes"</span>, <span class="str">"Dumangas"</span>, <span class="str">"Barotac Nuevo"</span>],
+  <span class="str">"Pavia"</span>: [<span class="str">"Santa Barbara"</span>, <span class="str">"San Miguel"</span>, <span class="str">"Iloilo City"</span>, <span class="str">"Leganes"</span>],
+  <span class="str">"Leganes"</span>: [<span class="str">"Pavia"</span>, <span class="str">"Iloilo City"</span>, <span class="str">"Zarraga"</span>, <span class="str">"Dumangas"</span>],
+  <span class="str">"Iloilo City"</span>: [<span class="str">"Pavia"</span>, <span class="str">"Leganes"</span>, <span class="str">"Oton"</span>, <span class="str">"San Miguel"</span>],
+  <span class="str">"Oton"</span>: [<span class="str">"Iloilo City"</span>, <span class="str">"San Miguel"</span>, <span class="str">"Tigbauan"</span>],
+  <span class="str">"San Miguel"</span>: [<span class="str">"Oton"</span>, <span class="str">"Iloilo City"</span>, <span class="str">"Pavia"</span>, <span class="str">"Santa Barbara"</span>, <span class="str">"Alimodian"</span>, <span class="str">"Leon"</span>],
+  <span class="str">"Alimodian"</span>: [<span class="str">"San Miguel"</span>, <span class="str">"Santa Barbara"</span>, <span class="str">"Cabatuan"</span>, <span class="str">"Maasin"</span>, <span class="str">"Leon"</span>],
+  <span class="str">"Leon"</span>: [<span class="str">"San Miguel"</span>, <span class="str">"Alimodian"</span>, <span class="str">"Tigbauan"</span>, <span class="str">"Tubungan"</span>],
+  <span class="str">"Tigbauan"</span>: [<span class="str">"Oton"</span>, <span class="str">"Leon"</span>, <span class="str">"Guimbal"</span>, <span class="str">"Tubungan"</span>],
+  <span class="str">"Guimbal"</span>: [<span class="str">"Tigbauan"</span>, <span class="str">"Tubungan"</span>, <span class="str">"Igbaras"</span>, <span class="str">"Miagao"</span>],
+  <span class="str">"Tubungan"</span>: [<span class="str">"Leon"</span>, <span class="str">"Tigbauan"</span>, <span class="str">"Guimbal"</span>, <span class="str">"Igbaras"</span>],
+  <span class="str">"Igbaras"</span>: [<span class="str">"Guimbal"</span>, <span class="str">"Tubungan"</span>, <span class="str">"Miagao"</span>],
+  <span class="str">"Miagao"</span>: [<span class="str">"Guimbal"</span>, <span class="str">"Igbaras"</span>, <span class="str">"San Joaquin"</span>],
+  <span class="str">"San Joaquin"</span>: [<span class="str">"Miagao"</span>],
+  <span class="str">"Dumangas"</span>: [<span class="str">"Zarraga"</span>, <span class="str">"Leganes"</span>, <span class="str">"Barotac Nuevo"</span>],
+  <span class="str">"Barotac Nuevo"</span>: [<span class="str">"Zarraga"</span>, <span class="str">"Pototan"</span>, <span class="str">"Dingle"</span>, <span class="str">"Anilao"</span>, <span class="str">"Banate"</span>, <span class="str">"Dumangas"</span>, <span class="str">"San Enrique"</span>],
+  <span class="str">"Anilao"</span>: [<span class="str">"Barotac Nuevo"</span>, <span class="str">"Dingle"</span>, <span class="str">"Banate"</span>],
+  <span class="str">"Banate"</span>: [<span class="str">"Anilao"</span>, <span class="str">"Barotac Nuevo"</span>, <span class="str">"San Enrique"</span>, <span class="str">"Barotac Viejo"</span>],
+  <span class="str">"Barotac Viejo"</span>: [<span class="str">"Banate"</span>, <span class="str">"San Rafael"</span>, <span class="str">"Ajuy"</span>],
+  <span class="str">"San Rafael"</span>: [<span class="str">"Barotac Viejo"</span>, <span class="str">"Lemery"</span>],
+  <span class="str">"Ajuy"</span>: [<span class="str">"Barotac Viejo"</span>, <span class="str">"Lemery"</span>, <span class="str">"Sara"</span>, <span class="str">"Concepcion"</span>],
+  <span class="str">"Sara"</span>: [<span class="str">"Ajuy"</span>, <span class="str">"Lemery"</span>, <span class="str">"San Dionisio"</span>, <span class="str">"Concepcion"</span>],
+  <span class="str">"Lemery"</span>: [<span class="str">"Sara"</span>, <span class="str">"Ajuy"</span>, <span class="str">"San Rafael"</span>],
+  <span class="str">"Concepcion"</span>: [<span class="str">"Ajuy"</span>, <span class="str">"Sara"</span>],
+  <span class="str">"San Dionisio"</span>: [<span class="str">"Sara"</span>, <span class="str">"Batad"</span>],
+  <span class="str">"Batad"</span>: [<span class="str">"San Dionisio"</span>, <span class="str">"Balasan"</span>, <span class="str">"Estancia"</span>],
+  <span class="str">"Balasan"</span>: [<span class="str">"Batad"</span>, <span class="str">"Estancia"</span>, <span class="str">"Carles"</span>],
+  <span class="str">"Estancia"</span>: [<span class="str">"Batad"</span>, <span class="str">"Balasan"</span>, <span class="str">"Carles"</span>],
+  <span class="str">"Carles"</span>: [<span class="str">"Balasan"</span>, <span class="str">"Estancia"</span>],
+}
+
+<span class="kw">function</span> <span class="fn">bfs</span>(start: <span class="tp">string</span>, end: <span class="tp">string</span>): <span class="tp">number</span> {
+  <span class="kw">if</span> (!iloiloNeighbors[start] || !iloiloNeighbors[end]) <span class="kw">return</span> 3
+  <span class="kw">const</span> queue: [<span class="tp">string</span>, <span class="tp">number</span>][] = [[start, 0]]
+  <span class="kw">const</span> visited = <span class="kw">new</span> Set([start])
+  <span class="kw">while</span> (queue.length) {
+    <span class="kw">const</span> [current, dist] = queue.shift()!
+    <span class="kw">if</span> (current === end) <span class="kw">return</span> dist
+    <span class="kw">for</span> (<span class="kw">const</span> neighbor <span class="kw">of</span> iloiloNeighbors[current] || []) {
+      <span class="kw">if</span> (!visited.has(neighbor)) {
+        visited.add(neighbor)
+        queue.push([neighbor, dist + 1])
+      }
+    }
+  }
+  <span class="kw">return</span> 3
+}
+
+<span class="kw">export function</span> <span class="fn">calculateDeliveryFee</span>(
+  start: <span class="tp">string</span>,
+  end: <span class="tp">string</span>,
+  baseFee: <span class="tp">number</span>,
+  extraFeePerMunicipality: <span class="tp">number</span>
+): <span class="tp">number</span> {
+  <span class="kw">if</span> (start === end) <span class="kw">return</span> 0
+  <span class="kw">const</span> jumps = bfs(start, end) || 1
+  <span class="kw">return</span> baseFee + Math.floor((jumps - 1) / 2) * extraFeePerMunicipality
+}</code></pre>
+</section>
+
+<!-- ======================== BOOKING STATE MACHINE ======================== -->
+<section>
+  <h2><span class="n">10</span>Booking State Machine</h2>
+  <p>Port the strict forward-only state machine from <code>BookingController.php</code>. Used by both palay pickup and rice delivery flows.</p>
+  <pre><code><span class="cm">// src/app/api/bookings/[id]/status/route.ts</span>
+<span class="kw">import</span> { prisma } <span class="kw">from</span> <span class="str">'@/lib/prisma'</span>
+<span class="kw">import</span> { NextRequest, NextResponse } <span class="kw">from</span> <span class="str">'next/server'</span>
+
+<span class="kw">const</span> validTransitions: Record&lt;<span class="tp">string</span>, <span class="tp">string</span>&gt; = {
+  pending:    <span class="str">'assigned'</span>,
+  assigned:   <span class="str">'at_pickup'</span>,
+  at_pickup:  <span class="str">'in_transit'</span>,
+  in_transit: <span class="str">'delivered'</span>,
+}
+
+<span class="kw">export async function</span> <span class="fn">POST</span>(
+  request: NextRequest,
+  { params }: { params: { id: <span class="tp">string</span> } }
+) {
+  <span class="kw">const</span> { status: newStatus } = <span class="kw">await</span> request.json()
+
+  <span class="kw">const</span> booking = <span class="kw">await</span> prisma.booking.findUnique({
+    where: { id: Number(params.id) },
+    include: { harvestBatch: <span class="fn">true</span> },
+  })
+
+  <span class="kw">if</span> (!booking) {
+    <span class="kw">return</span> NextResponse.json({ error: <span class="str">'Booking not found'</span> }, { status: 404 })
+  }
+
+  <span class="cm">// Validate transition</span>
+  <span class="kw">if</span> (validTransitions[booking.status] !== newStatus) {
+    <span class="kw">return</span> NextResponse.json(
+      { error: <span class="str">`Cannot transition from ${booking.status} to ${newStatus}`</span> },
+      { status: 400 }
+    )
+  }
+
+  <span class="cm">// Money-gate for palay</span>
+  <span class="kw">if</span> (
+    booking.harvestBatchId &amp;&amp;
+    newStatus === <span class="str">'in_transit'</span> &amp;&amp;
+    booking.harvestBatch?.deliveryStatus !== <span class="str">'Payment Authorized'</span>
+  ) {
+    <span class="kw">return</span> NextResponse.json(
+      { error: <span class="str">'Miller must authorize payment before transit'</span> },
+      { status: 400 }
+    )
+  }
+
+  <span class="cm">// Update booking + sync delivery status on parent entity</span>
+  <span class="kw">await</span> prisma.<span class="fn">$transaction</span>(<span class="kw">async</span> (tx) =&gt; {
+    <span class="kw">await</span> tx.booking.update({
+      where: { id: booking.id },
+      data: { status: newStatus },
+    })
+
+    <span class="kw">const</span> deliveryStatusMap: Record&lt;<span class="tp">string</span>, <span class="tp">string</span>&gt; = {
+      assigned:   <span class="str">'Pending'</span>,
+      at_pickup:  <span class="str">'Pending'</span>,
+      in_transit: <span class="str">'In Transit'</span>,
+      delivered:  <span class="str">'Delivered'</span>,
+    }
+
+    <span class="kw">if</span> (booking.harvestBatchId) {
+      <span class="kw">const</span> update: Record&lt;<span class="tp">string</span>, <span class="tp">any</span>&gt; = {
+        deliveryStatus: deliveryStatusMap[newStatus] || <span class="str">'Pending'</span>,
+      }
+      <span class="kw">if</span> (newStatus === <span class="str">'in_transit'</span>) update.status = <span class="str">'in_transit'</span>
+      <span class="kw">if</span> (newStatus === <span class="str">'delivered'</span>) {
+        update.status = <span class="str">'received'</span>
+        update.deliveryStatus = <span class="str">'Received'</span>
+      }
+      <span class="kw">await</span> tx.harvestBatch.update({
+        where: { id: booking.harvestBatchId },
+        data: update,
+      })
+    }
+  })
+
+  <span class="kw">return</span> NextResponse.json({ success: <span class="fn">true</span> })
+}</code></pre>
+
+  <h3>10.1 Accept Job (Driver Claims Booking)</h3>
+  <pre><code><span class="cm">// src/app/api/bookings/[id]/accept/route.ts</span>
+<span class="kw">import</span> { prisma } <span class="kw">from</span> <span class="str">'@/lib/prisma'</span>
+<span class="kw">import</span> { NextRequest, NextResponse } <span class="kw">from</span> <span class="str">'next/server'</span>
+
+<span class="kw">export async function</span> <span class="fn">POST</span>(
+  request: NextRequest,
+  { params }: { params: { id: <span class="tp">string</span> } }
+) {
+  <span class="kw">const</span> { driverId } = <span class="kw">await</span> request.json()
+
+  <span class="kw">await</span> prisma.<span class="fn">$transaction</span>(<span class="kw">async</span> (tx) =&gt; {
+    <span class="kw">const</span> booking = <span class="kw">await</span> tx.booking.findUnique({
+      where: { id: Number(params.id) },
+    })
+
+    <span class="kw">if</span> (!booking || booking.status !== <span class="str">'pending'</span>) {
+      <span class="kw">throw new</span> Error(<span class="str">'Job taken or unavailable.'</span>)
+    }
+
+    <span class="kw">await</span> tx.booking.update({
+      where: { id: booking.id },
+      data: { driverId, status: <span class="str">'assigned'</span> },
+    })
+
+    <span class="cm">// Sync driver_id back to HarvestBatch</span>
+    <span class="kw">if</span> (booking.harvestBatchId) {
+      <span class="kw">await</span> tx.harvestBatch.update({
+        where: { id: booking.harvestBatchId },
+        data: { driverId, deliveryStatus: <span class="str">'Pending'</span> },
+      })
+    }
+  })
+
+  <span class="kw">return</span> NextResponse.json({ success: <span class="fn">true</span> })
+}</code></pre>
+</section>
+
+<!-- ======================== NOTIFICATION TYPES ======================== -->
+<section>
+  <h2><span class="n">11</span>Notification Types (Pilot Scope)</h2>
+  <p>All 11 notification types from the Laravel codebase. For the pilot, send synchronously in API routes. The list tells you <em>which</em> notifications to implement and <em>when</em> they fire.</p>
+  <div class="tw">
+    <table>
+      <tr><th>#</th><th>Notification</th><th>Recipient</th><th>Trigger Event</th><th>Data Payload</th></tr>
+      <tr><td>1</td><td>NewHarvestPosted</td><td>All Millers</td><td>Farmer creates harvest batch (status → 'available')</td><td>farmerName, batchId, variety, totalSacks</td></tr>
+      <tr><td>2</td><td>InterestReceived</td><td>Farmer</td><td>Miller expresses interest in harvest</td><td>millerName, batchId, variety</td></tr>
+      <tr><td>3</td><td>DriverAssigned</td><td>Farmer or Retailer</td><td>Driver assigned to booking</td><td>driverName, entityId</td></tr>
+      <tr><td>4</td><td>PickupScheduled</td><td>Farmer</td><td>Miller sets scheduled_pickup_date</td><td>date, entityId</td></tr>
+      <tr><td>5</td><td>PaymentPaid</td><td>Farmer</td><td>Payment credited to farmer wallet</td><td>entityId, amount</td></tr>
+      <tr><td>6</td><td>WeightLogged</td><td>Farmer</td><td>Driver logs weight/price at pickup</td><td>batchId, weightKg, pricePerKg</td></tr>
+      <tr><td>7</td><td>LowStock</td><td>Miller</td><td>Rice stock falls below threshold</td><td>riceVariety, stockId, remainingSacks</td></tr>
+      <tr><td>8</td><td>BookingAssigned</td><td>Driver + Miller</td><td>Retailer books a specific driver</td><td>orderId, driverName, retailerName</td></tr>
+      <tr><td>9</td><td>RiceReadyForPickup</td><td>Retailer</td><td>Miller marks order as ready</td><td>orderId</td></tr>
+      <tr><td>10</td><td>ReleaseRequested</td><td>Miller</td><td>Retailer places self-pickup order</td><td>orderId, retailerName</td></tr>
+      <tr><td>11</td><td>DeliveryScheduled</td><td>Retailer</td><td>Miller sets scheduled_delivery_date</td><td>date, entityId</td></tr>
+    </table>
+  </div>
+
+  <h3>11.1 Synchronous Send Pattern</h3>
+  <pre><code><span class="cm">// Inside a Server Action or API route handler:</span>
+<span class="kw">await</span> prisma.notification.create({
+  data: {
+    type: <span class="str">'NewHarvestPosted'</span>,
+    notifiableType: <span class="str">'User'</span>,
+    notifiableId: millerId,
+    data: {
+      farmerName,
+      batchId: batch.id,
+      variety: batch.riceVariety,
+      totalSacks: batch.totalSacks,
+    },
+  },
+})</code></pre>
+</section>
+
+<!-- ======================== ENVIRONMENT VARIABLES ======================== -->
+<section>
+  <h2><span class="n">12</span>Environment Variables</h2>
+  <p>Required for Vercel deployment. Set these in the Vercel dashboard.</p>
+  <pre><code><span class="cm"># .env.local (or Vercel dashboard)</span>
+<span class="tp">NEXT_PUBLIC_SUPABASE_URL</span>=https://your-project.supabase.co
+<span class="tp">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>=your-anon-key
+<span class="tp">SUPABASE_SERVICE_ROLE_KEY</span>=your-service-role-key   <span class="cm"># server-side only, never expose</span>
+
+<span class="tp">DATABASE_URL</span>=postgresql://postgres:password@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres
+<span class="tp">DIRECT_URL</span>=postgresql://postgres:password@db.tdvjnowvumpvphhharur.supabase.co:5432/postgres</code></pre>
+  <div class="callout good">
+    <h4>Same Supabase project</h4>
+    <p style="margin-bottom:0">Use the existing Supabase project — no data migration needed. The <code>DATABASE_URL</code> points to the same Postgres instance the Laravel app already uses.</p>
+  </div>
+</section>
+
+<!-- ======================== SEQUENCING ======================== -->
+<section>
+  <h2><span class="n">13</span>Sequencing Against the Calendar</h2>
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-date">Sep 9–11</div>
+      <div class="tl-body"><b>Phase 0 — Foundation</b><p>Next.js init, install deps (<code>@supabase/ssr</code>, <code>prisma</code>, <code>@tanstack/react-query</code>, <code>recharts</code>, <code>@headlessui/react</code>, <code>zustand</code>, <code>decimal.js</code>). Prisma schema for core tables. Supabase project wired. Branch structure (<code>main</code>/<code>development</code>). Folder structure from §4.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Sep 11–15</div>
+      <div class="tl-body"><b>Phase 1 — Money &amp; Identity</b><p>Wallet/Ledger port with <code>transfer()</code> (§8). Auth + role middleware (§7). Farmer harvest-listing flow. This is the load-bearing phase — everything depends on the ledger being right.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Sep 15–18</div>
+      <div class="tl-body"><b>Phase 2 — Transaction Flow</b><p>Miller marketplace browse, offer + handshake acceptance, incoming palay, inventory lifecycle (drying → milling → finished stock), booking state machine (§10), market price board, synchronous notifications for 4 pilot types.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Sep 18–20</div>
+      <div class="tl-body"><b>Phase 3 — Settlement &amp; Hardening</b><p>Weigh-slip photo upload to Supabase Storage, minimal admin view, end-to-end walkthrough on a real phone on mobile data (not campus wifi), deploy to Vercel production, confirm plan tier for commercial use.</p></div>
+    </div>
+    <div class="tl-row mandatory">
+      <div class="tl-date">Sep 21–26</div>
+      <div class="tl-body"><b>Capacity-building (mandatory, no dev time)</b><p>Zero build runway here by rule. Any schedule slip in Phases 0–3 has nowhere to go but into the pilot window.</p></div>
+    </div>
+    <div class="tl-row pilot">
+      <div class="tl-date">Sep 27–Oct 4</div>
+      <div class="tl-body"><b>Live pilot</b><p>Runs on whatever shipped by Sep 20. A working pilot on a smaller system beats a broken one on a bigger scope.</p></div>
+    </div>
+    <div class="tl-row pitch">
+      <div class="tl-date">Oct 5–7</div>
+      <div class="tl-body"><b>Pitch</b><p>Manila. The system needs to demo cleanly for the 20 seconds of screen time the pitch structure budgets.</p></div>
+    </div>
+  </div>
+  <div class="callout alt">
+    <h4>The honest risk in this schedule</h4>
+    <p style="margin-bottom:0">11 dev days for Phases 0–3 is tight even for a port. If Phase 1 (the ledger) runs long, cut further into §2's "defer" list — not to compress testing on the money logic. A late pilot with a solid ledger is recoverable; a pilot that mishandles a farmer's payment during a live demo in front of judges is not.</p>
+  </div>
+</section>
+
+<!-- ======================== INSTALLATION STEPS ======================== -->
+<section>
+  <h2><span class="n">14</span>Phase 0 — Exact Commands</h2>
+  <h3>14.1 Scaffold Next.js</h3>
+  <pre><code>npx create-next-app@latest rice-connect \
+  --typescript --tailwind --app --src-dir --no-eslint</code></pre>
+
+  <h3>14.2 Install Dependencies</h3>
+  <pre><code><span class="cm"># Core</span>
+npm install @supabase/supabase-js @supabase/ssr
+npm install prisma @prisma/client
+
+<span class="cm"># Data fetching</span>
+npm install @tanstack/react-query
+
+<span class="cm"># UI (already used in Laravel version)</span>
+npm install recharts @headlessui/react
+
+<span class="cm"># Money safety</span>
+npm install decimal.js
+
+<span class="cm"># State + utilities</span>
+npm install zustand date-fns clsx tailwind-merge</code></pre>
+
+  <h3>14.3 Initialize Prisma</h3>
+  <pre><code>npx prisma init
+<span class="cm"># Copy schema from §3.1 into prisma/schema.prisma</span>
+npx prisma db pull    <span class="cm"># introspect existing Supabase tables</span>
+npx prisma generate  <span class="cm"># generate Prisma client</span></code></pre>
+
+  <h3>14.4 CHECK Constraints Migration</h3>
+  <pre><code><span class="cm"># Run the SQL from §3.2 against Supabase</span>
+<span class="cm"># Via Supabase SQL Editor or:</span>
+psql $DATABASE_URL -f migrations/20260909_add_check_constraints.sql</code></pre>
+</section>
+
+<!-- ======================== NOT IN THIS PLAN ======================== -->
+<section>
+  <h2><span class="n">15</span>What's Explicitly Not in This Plan</h2>
+  <ul>
+    <li>Retailer and Driver modules, and every analytics table — deferred per §2, revisit after Oct 7</li>
+    <li>A background job queue — deliberately not building one; revisit only if notification volume post-pilot justifies it</li>
+    <li>Postgres RLS as a real security boundary — not wired this round; app-layer role check is the boundary</li>
+    <li>Agent/task breakdown for handing individual build tasks to the team — this is the architecture-level sequencing, not the task-by-task execution plan</li>
+    <li>Pixel-perfect CSS audit — rc-theme.css copied verbatim; visual QA happens during Phase 3</li>
+  </ul>
+</section>
+
+<footer class="foot">
+  Merged migration plan · combines riceconnect-migration-plan.html (Syntaxure Labs, Sep 9 2026) with MIGRATION_PLAN.html (codebase analysis) · scoped to the standing Enactus PH 2026 calendar · follows the branch/deploy convention established on LikasLens
+</footer>
+
+</div>
+</body>
+</html>

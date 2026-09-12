@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rice Connect v2 — Laravel → Next.js Migration Plan</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --border: #475569;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-2: #818cf8;
+            --green: #4ade80;
+            --yellow: #fbbf24;
+            --red: #f87171;
+            --orange: #fb923c;
+            --pink: #f472b6;
+            --purple: #c084fc;
+            --teal: #2dd4bf;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 50%, #1a1a2e 100%);
+            padding: 80px 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(129, 140, 248, 0.08) 0%, transparent 50%);
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            position: relative;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero .subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            position: relative;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .hero .stack-badges {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 28px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .badge-laravel { background: rgba(255, 45, 32, 0.1); border-color: rgba(255, 45, 32, 0.3); color: #ff6b5a; }
+        .badge-nextjs { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.15); color: #fff; }
+        .badge-supabase { background: rgba(62, 207, 142, 0.1); border-color: rgba(62, 207, 142, 0.3); color: #3ecf8e; }
+        .badge-vercel { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.15); color: #fff; }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 50px 30px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .phase-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .phase-0 .phase-number { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
+        .phase-1 .phase-number { background: rgba(62, 207, 142, 0.15); color: var(--green); }
+        .phase-2 .phase-number { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+        .phase-3 .phase-number { background: rgba(129, 140, 248, 0.15); color: var(--accent-2); }
+        .phase-4 .phase-number { background: rgba(244, 114, 182, 0.15); color: var(--pink); }
+        .phase-5 .phase-number { background: rgba(251, 146, 60, 0.15); color: var(--orange); }
+        .phase-6 .phase-number { background: rgba(192, 132, 252, 0.15); color: var(--purple); }
+        .phase-7 .phase-number { background: rgba(45, 212, 191, 0.15); color: var(--teal); }
+        .phase-8 .phase-number { background: rgba(248, 113, 113, 0.15); color: var(--red); }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .section h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 28px 0 14px;
+        }
+
+        .section h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin: 20px 0 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p { margin-bottom: 14px; color: var(--text-muted); }
+        p strong { color: var(--text); }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--surface-2);
+            text-align: left;
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.4);
+            color: var(--text-muted);
+        }
+
+        tr:hover td { background: rgba(56, 189, 248, 0.03); }
+        td code { color: var(--accent); font-size: 0.85rem; background: rgba(56, 189, 248, 0.08); padding: 2px 6px; border-radius: 4px; }
+        th code { color: var(--accent); font-size: 0.8rem; background: rgba(56, 189, 248, 0.08); padding: 2px 6px; border-radius: 4px; }
+
+        pre {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px;
+            overflow-x: auto;
+            margin: 14px 0;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        pre code {
+            color: var(--text-muted);
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        }
+
+        .comment { color: #6b7280; }
+        .keyword { color: var(--accent-2); }
+        .string { color: var(--green); }
+        .function { color: var(--yellow); }
+        .type { color: var(--teal); }
+
+        ul, ol {
+            margin: 10px 0 14px 24px;
+            color: var(--text-muted);
+        }
+
+        li { margin-bottom: 6px; }
+        li strong { color: var(--text); }
+
+        .info-box {
+            background: rgba(56, 189, 248, 0.06);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin: 18px 0;
+        }
+
+        .info-box.warning {
+            background: rgba(251, 191, 36, 0.06);
+            border-color: rgba(251, 191, 36, 0.2);
+        }
+
+        .info-box.success {
+            background: rgba(74, 222, 128, 0.06);
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+
+        .info-box .label {
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .info-box .label { color: var(--accent); }
+        .info-box.warning .label { color: var(--yellow); }
+        .info-box.success .label { color: var(--green); }
+
+        .folder-tree {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+
+        .folder-tree .folder { color: var(--accent); font-weight: 600; }
+        .folder-tree .file { color: var(--text-muted); }
+        .folder-tree .comment { color: #6b7280; }
+
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .checklist li {
+            padding: 6px 0;
+            padding-left: 28px;
+            position: relative;
+        }
+
+        .checklist li::before {
+            content: '☐';
+            position: absolute;
+            left: 0;
+            color: var(--text-muted);
+        }
+
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        .timeline-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .timeline-item .days {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .timeline-item .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            padding: 10px 0;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            padding: 24px;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .flow-box {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .flow-arrow {
+            font-size: 1.4rem;
+            color: var(--text-muted);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8rem; }
+            .hero { padding: 50px 20px; }
+            .container { padding: 30px 16px; }
+            .timeline { grid-template-columns: 1fr 1fr; }
+            table { font-size: 0.8rem; }
+            pre { font-size: 0.78rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ======================== HERO ======================== -->
+<div class="hero">
+    <h1>Rice Connect v2 — Migration Plan</h1>
+    <p class="subtitle">Convert the Laravel + Inertia.js + React supply chain platform to Next.js App Router with Supabase — without breaking the core concept.</p>
+    <div class="stack-badges">
+        <span class="badge badge-laravel">Laravel 12 →</span>
+        <span class="badge badge-nextjs">Next.js 14+ (App Router)</span>
+        <span class="badge badge-supabase">Supabase (PostgreSQL + Auth + Realtime)</span>
+        <span class="badge badge-vercel">Deploy on Vercel</span>
+    </div>
+</div>
+
+<div class="container">
+
+<!-- ======================== CURRENT STATE ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted);">!</div>
+        <h2>Current State — What We Already Have</h2>
+    </div>
+
+    <div class="info-box success">
+        <div class="label">Key Finding</div>
+        <p style="margin:0; color: var(--text-muted);">Your project is <strong style="color: var(--green);">already deployed on Render</strong> and <strong style="color: var(--green);">already uses Supabase PostgreSQL</strong> as its database. No database migration is needed — only RLS policies and auth need to be added to the existing Supabase project.</p>
+    </div>
+
+    <div class="flow-diagram">
+        <div class="flow-box" style="background: rgba(255, 45, 32, 0.1); border: 1px solid rgba(255, 45, 32, 0.3); color: #ff6b5a;">Render (Laravel + Docker)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="background: rgba(62, 207, 142, 0.1); border: 1px solid rgba(62, 207, 142, 0.3); color: #3ecf8e;">Supabase PostgreSQL</div>
+    </div>
+
+    <div class="arrow">↓ converts to ↓</div>
+
+    <div class="flow-diagram">
+        <div class="flow-box" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff;">Vercel (Next.js 14)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="background: rgba(62, 207, 142, 0.1); border: 1px solid rgba(62, 207, 142, 0.3); color: #3ecf8e;">Supabase (DB + Auth + Realtime)</div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Existing Tech Stack</div>
+        <table>
+            <tr><th>Layer</th><th>Current</th><th>Target</th></tr>
+            <tr><td>Backend</td><td><code>Laravel 12</code> (PHP 8.2)</td><td><code>Next.js 14+</code> (Server Actions + API Routes)</td></tr>
+            <tr><td>Frontend</td><td><code>Inertia.js</code> + React 18</td><td><code>Next.js App Router</code> + React Server Components</td></tr>
+            <tr><td>Database</td><td><code>Supabase PostgreSQL</code> (via Eloquent)</td><td><code>Supabase</code> (via @supabase/supabase-js)</td></tr>
+            <tr><td>Auth</td><td>Laravel Breeze + session</td><td><code>Supabase Auth</code> + RLS</td></tr>
+            <tr><td>Real-time</td><td>10s polling (Inertia partial reloads)</td><td><code>Supabase Realtime</code> subscriptions</td></tr>
+            <tr><td>Styling</td><td>Tailwind CSS 3 + rc-theme.css</td><td>Same Tailwind classes (identical port)</td></tr>
+            <tr><td>Build</td><td>Vite 7</td><td>Next.js built-in (Turbopack)</td></tr>
+            <tr><td>Deploy</td><td>Render.com (Docker)</td><td><code>Vercel</code> (zero-config)</td></tr>
+            <tr><td>State</td><td>Inertia server props</td><td>Server Components + @tanstack/query</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Existing Supabase Connection (from render.yaml)</div>
+<pre><code><span class="comment"># Already configured in production</span>
+<span class="keyword">DB_HOST</span>=aws-0-ap-southeast-2.pooler.supabase.com
+<span class="keyword">DB_PORT</span>=5432
+<span class="keyword">DB_DATABASE</span>=postgres
+<span class="keyword">DB_USERNAME</span>=postgres.tdvjnowvumpvphhharur
+<span class="keyword">DB_SSLMODE</span>=require</code></pre>
+    </div>
+</div>
+
+<!-- ======================== PROJECT STRUCTURE ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-0">0</div>
+        <h2>Phase 0 — Project Scaffolding</h2>
+    </div>
+
+    <h3>0.1 Initialize Next.js</h3>
+<pre><code>npx create-next-app@latest rice-connect \
+  --typescript --tailwind --app --src-dir --no-eslint</code></pre>
+
+    <h3>0.2 Install Dependencies</h3>
+<pre><code><span class="comment"># Core</span>
+npm install @supabase/supabase-js @supabase/ssr
+
+<span class="comment"># Data fetching</span>
+npm install @tanstack/react-query
+
+<span class="comment"># UI (already used in Laravel version)</span>
+npm install recharts @headlessui/react
+
+<span class="comment"># Utilities</span>
+npm install zustand date-fns clsx tailwind-merge</code></pre>
+
+    <h3>0.3 Target Folder Structure</h3>
+    <div class="card">
+<pre class="folder-tree"><span class="folder">src/</span>
+├── <span class="folder">app/</span>
+│   ├── <span class="folder">(auth)/</span>                        <span class="comment"># guest pages</span>
+│   │   ├── <span class="file">login/page.tsx</span>
+│   │   ├── <span class="file">register/page.tsx</span>
+│   │   ├── <span class="file">forgot-password/page.tsx</span>
+│   │   └── <span class="file">reset-password/page.tsx</span>
+│   ├── <span class="folder">(protected)/</span>                   <span class="comment"># authenticated routes</span>
+│   │   ├── <span class="file">layout.tsx</span>                   <span class="comment"># AuthenticatedLayout</span>
+│   │   ├── <span class="file">dashboard/page.tsx</span>
+│   │   ├── <span class="file">profile/page.tsx</span>
+│   │   ├── <span class="folder">farmer/</span>
+│   │   │   ├── <span class="file">harvest/page.tsx</span>
+│   │   │   ├── <span class="file">harvest/new/page.tsx</span>
+│   │   │   ├── <span class="file">harvest/[id]/edit/page.tsx</span>
+│   │   │   └── <span class="file">offers/page.tsx</span>
+│   │   ├── <span class="folder">miller/</span>
+│   │   │   ├── <span class="file">marketplace/page.tsx</span>
+│   │   │   ├── <span class="file">incoming/page.tsx</span>
+│   │   │   ├── <span class="file">inventory/page.tsx</span>
+│   │   │   ├── <span class="file">processed-inventory/page.tsx</span>
+│   │   │   ├── <span class="file">orders/page.tsx</span>
+│   │   │   ├── <span class="file">transport/page.tsx</span>
+│   │   │   └── <span class="file">shipping-settings/page.tsx</span>
+│   │   ├── <span class="folder">retailer/</span>
+│   │   │   ├── <span class="file">marketplace/page.tsx</span>
+│   │   │   ├── <span class="file">orders/page.tsx</span>
+│   │   │   └── <span class="file">purchases/page.tsx</span>
+│   │   ├── <span class="folder">driver/</span>
+│   │   │   └── <span class="file">dashboard/page.tsx</span>
+│   │   ├── <span class="folder">admin/</span>
+│   │   │   ├── <span class="file">dashboard/page.tsx</span>
+│   │   │   └── <span class="file">municipalities/page.tsx</span>
+│   │   └── <span class="folder">analytics/</span>
+│   │       ├── <span class="file">farmer/page.tsx</span>
+│   │       ├── <span class="file">miller/page.tsx</span>
+│   │       ├── <span class="file">retailer/page.tsx</span>
+│   │       └── <span class="file">admin/page.tsx</span>
+│   ├── <span class="folder">api/</span>                           <span class="comment"># Next.js API routes</span>
+│   │   ├── <span class="folder">analytics/</span>
+│   │   │   ├── <span class="file">farmer/route.ts</span>
+│   │   │   ├── <span class="file">miller/route.ts</span>
+│   │   │   ├── <span class="file">retailer/route.ts</span>
+│   │   │   └── <span class="file">admin/route.ts</span>
+│   │   ├── <span class="folder">bookings/</span>
+│   │   │   ├── <span class="file">[id]/accept/route.ts</span>
+│   │   │   └── <span class="file">[id]/status/route.ts</span>
+│   │   └── <span class="folder">notifications/</span>
+│   │       └── <span class="file">[id]/read/route.ts</span>
+│   ├── <span class="file">layout.tsx</span>                     <span class="comment"># root layout</span>
+│   └── <span class="file">page.tsx</span>                       <span class="comment"># landing page</span>
+├── <span class="folder">components/</span>
+│   ├── <span class="folder">ui/</span>                            <span class="comment"># shared primitives</span>
+│   │   ├── <span class="file">Modal.tsx</span>
+│   │   ├── <span class="file">Dropdown.tsx</span>
+│   │   ├── <span class="file">DeliveryStatusStepper.tsx</span>
+│   │   ├── <span class="file">PrimaryButton.tsx</span>
+│   │   ├── <span class="file">TextInput.tsx</span>
+│   │   └── <span class="file">...</span>
+│   ├── <span class="folder">layout/</span>
+│   │   ├── <span class="file">Sidebar.tsx</span>
+│   │   ├── <span class="file">Header.tsx</span>
+│   │   ├── <span class="file">NotificationDropdown.tsx</span>
+│   │   └── <span class="file">UserDropdown.tsx</span>
+│   └── <span class="folder">modules/</span>
+│       ├── <span class="file">farmers/</span>
+│       ├── <span class="file">millers/</span>
+│       ├── <span class="file">retailers/</span>
+│       ├── <span class="file">drivers/</span>
+│       └── <span class="file">admin/</span>
+├── <span class="folder">lib/</span>
+│   ├── <span class="folder">supabase/</span>
+│   │   ├── <span class="file">client.ts</span>                   <span class="comment"># browser client</span>
+│   │   ├── <span class="file">server.ts</span>                   <span class="comment"># server component client</span>
+│   │   └── <span class="file">middleware.ts</span>               <span class="comment"># auth middleware helper</span>
+│   ├── <span class="file">payment.ts</span>                     <span class="comment"># ported PaymentService</span>
+│   ├── <span class="file">municipality.ts</span>                <span class="comment"># ported BFS algorithm</span>
+│   └── <span class="file">utils.ts</span>
+├── <span class="folder">types/</span>
+│   └── <span class="file">database.ts</span>                    <span class="comment"># generated Supabase types</span>
+├── <span class="folder">hooks/</span>
+│   ├── <span class="file">useUser.ts</span>
+│   └── <span class="file">useNotifications.ts</span>
+├── <span class="folder">stores/</span>
+│   └── <span class="file">sidebar.ts</span>                     <span class="comment"># zustand store</span>
+└── <span class="file">middleware.ts</span>                       <span class="comment"># Next.js auth guard</span></pre>
+    </div>
+
+    <h3>0.4 Supabase Client Setup</h3>
+<pre><code><span class="comment">// src/lib/supabase/client.ts</span>
+<span class="keyword">import</span> { createBrowserClient } <span class="keyword">from</span> <span class="string">'@supabase/ssr'</span>
+
+<span class="keyword">export function</span> <span class="function">createClient</span>() {
+  <span class="keyword">return</span> createBrowserClient(
+    process.env.<span class="type">NEXT_PUBLIC_SUPABASE_URL</span>!,
+    process.env.<span class="type">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>!
+  )
+}</code></pre>
+
+<pre><code><span class="comment">// src/lib/supabase/server.ts</span>
+<span class="keyword">import</span> { createServerClient } <span class="keyword">from</span> <span class="string">'@supabase/ssr'</span>
+<span class="keyword">import</span> { cookies } <span class="keyword">from</span> <span class="string">'next/headers'</span>
+
+<span class="keyword">export async function</span> <span class="function">createClient</span>() {
+  <span class="keyword">const</span> cookieStore = <span class="keyword">await</span> cookies()
+
+  <span class="keyword">return</span> createServerClient(
+    process.env.<span class="type">NEXT_PUBLIC_SUPABASE_URL</span>!,
+    process.env.<span class="type">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>!,
+    {
+      cookies: {
+        getAll() { <span class="keyword">return</span> cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          <span class="keyword">try</span> {
+            cookiesToSet.forEach(({ name, value, options }) =&gt;
+              cookieStore.set(name, value, options)
+            )
+          } <span class="keyword">catch</span> {}
+        },
+      },
+    }
+  )
+}</code></pre>
+</div>
+
+<!-- ======================== DATABASE ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-1">1</div>
+        <h2>Phase 1 — Database Schema on Supabase</h2>
+    </div>
+
+    <div class="info-box success">
+        <div class="label">Skip Full Migration</div>
+        <p style="margin:0;">All 39 migrations have <strong>already run</strong> against your Supabase PostgreSQL. Tables and data are live. We only need to <strong>add RLS policies</strong> and <strong>auth triggers</strong> on top.</p>
+    </div>
+
+    <h3>1.1 UUID Migration Pattern</h3>
+    <p>Laravel uses auto-incrementing integers. Supabase Auth requires UUIDs. Two options:</p>
+    <div class="card">
+        <table>
+            <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+            <tr>
+                <td><strong>Add UUID column</strong> (keep existing IDs)</td>
+                <td>Zero data loss, backward compatible</td>
+                <td>Two ID columns, more complex queries</td>
+            </tr>
+            <tr>
+                <td><strong>Full UUID migration</strong></td>
+                <td>Clean schema, native Supabase support</td>
+                <td>Requires data transformation, FK updates</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>1.2 Add UUID Extension + Auth Trigger</h3>
+<pre><code><span class="comment">-- Enable UUID generation</span>
+<span class="keyword">CREATE EXTENSION IF NOT EXISTS</span> <span class="string">"uuid-ossp"</span>;
+
+<span class="comment">-- Auto-create public.users row when Supabase Auth user signs up</span>
+<span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">handle_new_user()</span>
+<span class="keyword">RETURNS TRIGGER AS</span> $$
+<span class="keyword">BEGIN</span>
+  <span class="keyword">INSERT INTO</span> public.users (id, email, first_name, last_name, role)
+  <span class="keyword">VALUES</span> (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data-&gt;&gt;<span class="string">'first_name'</span>, <span class="string">''</span>),
+    COALESCE(NEW.raw_user_meta_data-&gt;&gt;<span class="string">'last_name'</span>, <span class="string">''</span>),
+    COALESCE(NEW.raw_user_meta_data-&gt;&gt;<span class="string">'role'</span>, <span class="string">'farmer'</span>)
+  );
+  <span class="keyword">RETURN</span> NEW;
+<span class="keyword">END</span>;
+$$ <span class="keyword">LANGUAGE</span> plpgsql <span class="keyword">SECURITY DEFINER</span>;
+
+<span class="keyword">CREATE TRIGGER</span> on_auth_user_created
+  <span class="keyword">AFTER INSERT ON</span> auth.users
+  <span class="keyword">FOR EACH ROW EXECUTE FUNCTION</span> <span class="function">handle_new_user</span>();</code></pre>
+
+    <h3>1.3 Core Tables (22 total, already exist)</h3>
+    <div class="card">
+        <table>
+            <tr><th>#</th><th>Table</th><th>Purpose</th></tr>
+            <tr><td>1</td><td><code>municipalities</code></td><td>Iloilo municipalities + distance index</td></tr>
+            <tr><td>2</td><td><code>users</code></td><td>All platform users (5 roles)</td></tr>
+            <tr><td>3</td><td><code>wallets</code></td><td>User wallet balances</td></tr>
+            <tr><td>4</td><td><code>ledger_entries</code></td><td>Financial transaction ledger</td></tr>
+            <tr><td>5</td><td><code>harvest_batches</code></td><td>Palay harvest records</td></tr>
+            <tr><td>6</td><td><code>harvest_interests</code></td><td>Miller interest in harvests</td></tr>
+            <tr><td>7</td><td><code>orders</code></td><td>Rice sale orders</td></tr>
+            <tr><td>8</td><td><code>bookings</code></td><td>Grab-style driver bookings</td></tr>
+            <tr><td>9</td><td><code>finished_rice_stocks</code></td><td>Milled rice inventory</td></tr>
+            <tr><td>10</td><td><code>miller_delivery_settings</code></td><td>Per-miller shipping config</td></tr>
+            <tr><td>11</td><td><code>miller_driver</code></td><td>Miller-driver fleet (M2M)</td></tr>
+            <tr><td>12</td><td><code>miller_processing_logs</code></td><td>Milling operation records</td></tr>
+            <tr><td>13</td><td><code>miller_storage_capacity</code></td><td>Storage tracking</td></tr>
+            <tr><td>14</td><td><code>milling_queues</code></td><td>Milling queue management</td></tr>
+            <tr><td>15</td><td><code>farmer_yield_metrics</code></td><td>Yield tracking</td></tr>
+            <tr><td>16</td><td><code>market_prices</code></td><td>Rice market prices</td></tr>
+            <tr><td>17</td><td><code>retailer_stock_metrics</code></td><td>Retailer analytics</td></tr>
+            <tr><td>18</td><td><code>consumer_demand_heatmap</code></td><td>Demand patterns</td></tr>
+            <tr><td>19</td><td><code>supply_chain_metrics</code></td><td>Regional overview</td></tr>
+            <tr><td>20</td><td><code>regional_distribution_logs</code></td><td>Shipment tracking</td></tr>
+            <tr><td>21</td><td><code>notifications</code></td><td>Database notifications</td></tr>
+            <tr><td>22</td><td><code>towns</code></td><td>Town records</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- ======================== AUTH + RLS ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-2">2</div>
+        <h2>Phase 2 — Authentication + Row Level Security</h2>
+    </div>
+
+    <h3>2.1 Supabase Auth Setup</h3>
+    <ul>
+        <li>Enable Email/Password sign-up in Supabase dashboard</li>
+        <li>Configure redirect URLs for Vercel (<code>https://your-app.vercel.app/auth/callback</code>)</li>
+        <li>Database trigger auto-creates <code>public.users</code> row on sign-up (from Phase 1.2)</li>
+    </ul>
+
+    <h3>2.2 RLS Policies — Users</h3>
+<pre><code><span class="comment">-- Users can read their own profile</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"users_select_own"</span> <span class="keyword">ON</span> users
+  <span class="keyword">FOR SELECT USING</span> (auth.uid() = id);
+
+<span class="comment">-- Users can update their own profile</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"users_update_own"</span> <span class="keyword">ON</span> users
+  <span class="keyword">FOR UPDATE USING</span> (auth.uid() = id);
+
+<span class="comment">-- Admin can read all users</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"admin_select_all"</span> <span class="keyword">ON</span> users
+  <span class="keyword">FOR SELECT USING</span> (
+    <span class="keyword">EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> id = auth.uid() <span class="keyword">AND</span> role = <span class="string">'admin'</span>)
+  );</code></pre>
+
+    <h3>2.3 RLS Policies — Harvest Batches</h3>
+<pre><code><span class="comment">-- Farmers see only their own harvests</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"farmer_own_harvests"</span> <span class="keyword">ON</span> harvest_batches
+  <span class="keyword">FOR ALL USING</span> (
+    auth.uid() = user_id
+    <span class="keyword">AND EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> id = auth.uid() <span class="keyword">AND</span> role = <span class="string">'farmer'</span>)
+  );
+
+<span class="comment">-- Millers see marketplace + their accepted batches</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"miller_marketplace"</span> <span class="keyword">ON</span> harvest_batches
+  <span class="keyword">FOR SELECT USING</span> (
+    <span class="keyword">EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> id = auth.uid() <span class="keyword">AND</span> role = <span class="string">'miller'</span>)
+    <span class="keyword">AND</span> (status = <span class="string">'available'</span> <span class="keyword">OR</span> accepted_miller_id = auth.uid())
+  );
+
+<span class="comment">-- Admin sees all</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"admin_all_harvests"</span> <span class="keyword">ON</span> harvest_batches
+  <span class="keyword">FOR ALL USING</span> (
+    <span class="keyword">EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> id = auth.uid() <span class="keyword">AND</span> role = <span class="string">'admin'</span>)
+  );</code></pre>
+
+    <h3>2.4 RLS Policies — Orders</h3>
+<pre><code><span class="comment">-- Retailers see their own orders</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"retailer_own_orders"</span> <span class="keyword">ON</span> orders
+  <span class="keyword">FOR ALL USING</span> (
+    auth.uid() = retailer_id
+    <span class="keyword">AND EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> id = auth.uid() <span class="keyword">AND</span> role = <span class="string">'retailer'</span>)
+  );
+
+<span class="comment">-- Millers see orders where they are seller</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"miller_orders"</span> <span class="keyword">ON</span> orders
+  <span class="keyword">FOR ALL USING</span> (
+    auth.uid() = miller_id
+    <span class="keyword">AND EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> id = auth.uid() <span class="keyword">AND</span> role = <span class="string">'miller'</span>)
+  );
+
+<span class="comment">-- Drivers see assigned orders</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"driver_orders"</span> <span class="keyword">ON</span> orders
+  <span class="keyword">FOR SELECT USING</span> (
+    auth.uid() = driver_id
+    <span class="keyword">AND EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> id = auth.uid() <span class="keyword">AND</span> role = <span class="string">'driver'</span>)
+  );</code></pre>
+
+    <h3>2.5 RLS Policies — Bookings</h3>
+<pre><code><span class="comment">-- Drivers see pending + their own</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"driver_bookings"</span> <span class="keyword">ON</span> bookings
+  <span class="keyword">FOR SELECT USING</span> (
+    <span class="keyword">EXISTS</span> (<span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> id = auth.uid() <span class="keyword">AND</span> role = <span class="string">'driver'</span>)
+    <span class="keyword">AND</span> (status = <span class="string">'pending'</span> <span class="keyword">OR</span> driver_id = auth.uid())
+  );
+
+<span class="comment">-- Owners see bookings for their harvests/orders</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"owner_bookings"</span> <span class="keyword">ON</span> bookings
+  <span class="keyword">FOR SELECT USING</span> (
+    auth.uid() = (<span class="keyword">SELECT</span> user_id <span class="keyword">FROM</span> harvest_batches <span class="keyword">WHERE</span> id = harvest_batch_id)
+    <span class="keyword">OR</span> auth.uid() = (<span class="keyword">SELECT</span> retailer_id <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> id = order_id)
+  );</code></pre>
+
+    <h3>2.6 RLS Policies — Wallets + Ledger</h3>
+<pre><code><span class="comment">-- Users only see their own wallet and ledger</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"own_wallet"</span> <span class="keyword">ON</span> wallets
+  <span class="keyword">FOR SELECT USING</span> (auth.uid() = user_id);
+
+<span class="keyword">CREATE POLICY</span> <span class="string">"own_ledger"</span> <span class="keyword">ON</span> ledger_entries
+  <span class="keyword">FOR SELECT USING</span> (auth.uid() = user_id);
+
+<span class="comment">-- No direct INSERT/UPDATE from client</span>
+<span class="comment">-- Only via SECURITY DEFINER functions (PaymentService)</span></code></pre>
+
+    <h3>2.7 Next.js Middleware (Auth Guard)</h3>
+<pre><code><span class="comment">// src/middleware.ts</span>
+<span class="keyword">import</span> { createServerClient } <span class="keyword">from</span> <span class="string">'@supabase/ssr'</span>
+<span class="keyword">import</span> { NextResponse, type NextRequest } <span class="keyword">from</span> <span class="string">'next/server'</span>
+
+<span class="keyword">const</span> roleDashboard: Record&lt;string, string&gt; = {
+  farmer: <span class="string">'/farmer/harvest'</span>,
+  miller: <span class="string">'/miller/marketplace'</span>,
+  retailer: <span class="string">'/retailer/marketplace'</span>,
+  driver: <span class="string">'/driver/dashboard'</span>,
+  admin: <span class="string">'/admin/dashboard'</span>,
+}
+
+<span class="keyword">export async function</span> <span class="function">middleware</span>(request: NextRequest) {
+  <span class="keyword">let</span> supabaseResponse = NextResponse.next({ request })
+  <span class="keyword">const</span> supabase = createServerClient(
+    process.env.<span class="type">NEXT_PUBLIC_SUPABASE_URL</span>!,
+    process.env.<span class="type">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>!,
+    { cookies: { getAll: () =&gt; request.cookies.getAll(), setAll: () =&gt; {} } }
+  )
+
+  <span class="keyword">const</span> { data: { user } } = <span class="keyword">await</span> supabase.auth.getUser()
+
+  <span class="comment">// Protected routes</span>
+  <span class="keyword">if</span> (request.nextUrl.pathname.startsWith(<span class="string">'/(protected)'</span>)) {
+    <span class="keyword">if</span> (!user) {
+      <span class="keyword">return</span> NextResponse.redirect(<span class="keyword">new</span> URL(<span class="string">'/login'</span>, request.url))
+    }
+  }
+
+  <span class="comment">// Guest routes (redirect to dashboard if logged in)</span>
+  <span class="keyword">if</span> (request.nextUrl.pathname.startsWith(<span class="string">'/(auth)'</span>) &amp;&amp; user) {
+    <span class="keyword">const</span> { data: profile } = <span class="keyword">await</span> supabase
+      .from(<span class="string">'users'</span>).select(<span class="string">'role'</span>).eq(<span class="string">'id'</span>, user.id).single()
+    <span class="keyword">return</span> NextResponse.redirect(
+      <span class="keyword">new</span> URL(roleDashboard[profile?.role] || <span class="string">'/dashboard'</span>, request.url)
+    )
+  }
+
+  <span class="keyword">return</span> supabaseResponse
+}
+
+<span class="keyword">export const</span> config = {
+  matcher: [<span class="string">'/(auth)/:path*'</span>, <span class="string">'/(protected)/:path*'</span>]
+}</code></pre>
+</div>
+
+<!-- ======================== LAYOUT + COMPONENTS ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-3">3</div>
+        <h2>Phase 3 — Layout + Shared Components</h2>
+    </div>
+
+    <h3>3.1 Component Port Map</h3>
+    <div class="card">
+        <table>
+            <tr><th>Laravel (Inertia)</th><th>Next.js</th><th>Changes Needed</th></tr>
+            <tr><td><code>AuthenticatedLayout.jsx</code></td><td><code>(protected)/layout.tsx</code></td><td>Replace Inertia <code>&lt;Link&gt;</code> with Next.js <code>&lt;Link&gt;</code></td></tr>
+            <tr><td><code>GuestLayout.jsx</code></td><td><code>(auth)/layout.tsx</code></td><td>Minimal changes</td></tr>
+            <tr><td><code>Modal.jsx</code></td><td><code>components/ui/Modal.tsx</code></td><td>Keep @headlessui/react</td></tr>
+            <tr><td><code>Dropdown.jsx</code></td><td><code>components/ui/Dropdown.tsx</code></td><td>Keep compound component pattern</td></tr>
+            <tr><td><code>DeliveryStatusStepper.jsx</code></td><td><code>components/ui/DeliveryStatusStepper.tsx</code></td><td>Zero changes (pure presentational)</td></tr>
+            <tr><td><code>PrimaryButton.jsx</code></td><td><code>components/ui/PrimaryButton.tsx</code></td><td>Zero changes</td></tr>
+            <tr><td><code>SecondaryButton.jsx</code></td><td><code>components/ui/SecondaryButton.tsx</code></td><td>Zero changes</td></tr>
+            <tr><td><code>DangerButton.jsx</code></td><td><code>components/ui/DangerButton.tsx</code></td><td>Zero changes</td></tr>
+            <tr><td><code>TextInput.jsx</code></td><td><code>components/ui/TextInput.tsx</code></td><td>Zero changes</td></tr>
+            <tr><td><code>InputLabel.jsx</code></td><td><code>components/ui/InputLabel.tsx</code></td><td>Zero changes</td></tr>
+            <tr><td><code>InputError.jsx</code></td><td><code>components/ui/InputError.tsx</code></td><td>Zero changes</td></tr>
+            <tr><td><code>Checkbox.jsx</code></td><td><code>components/ui/Checkbox.tsx</code></td><td>Zero changes</td></tr>
+            <tr><td><code>ApplicationLogo.jsx</code></td><td><code>components/ui/ApplicationLogo.tsx</code></td><td>Zero changes</td></tr>
+        </table>
+    </div>
+
+    <h3>3.2 Role-Based Sidebar</h3>
+    <p>The sidebar uses <strong>identical conditional rendering</strong> — just swap Ziggy <code>route()</code> for hardcoded paths:</p>
+<pre><code><span class="comment">// src/components/layout/Sidebar.tsx</span>
+<span class="keyword">import</span> Link <span class="keyword">from</span> <span class="string">'next/link'</span>
+<span class="keyword">import</span> { usePathname } <span class="keyword">from</span> <span class="string">'next/navigation'</span>
+
+<span class="keyword">const</span> navItems = {
+  farmer: [
+    { href: <span class="string">'/farmer/harvest'</span>, label: <span class="string">'Harvest Logs'</span> },
+    { href: <span class="string">'/farmer/offers'</span>, label: <span class="string">'Handshake Offers'</span> },
+  ],
+  miller: [
+    { href: <span class="string">'/miller/marketplace'</span>, label: <span class="string">'Marketplace'</span> },
+    { href: <span class="string">'/miller/incoming'</span>, label: <span class="string">'Incoming Palay'</span> },
+    <span class="comment">// ... more items</span>
+  ],
+  <span class="comment">// ... other roles</span>
+}
+
+<span class="keyword">export default function</span> <span class="function">Sidebar</span>({ role }: { role: string }) {
+  <span class="keyword">const</span> pathname = usePathname()
+  <span class="keyword">return</span> (
+    &lt;nav&gt;
+      {(navItems[role] || []).map(item =&gt; (
+        &lt;Link key={item.href} href={item.href}
+          className={pathname === item.href ? <span class="string">'rc-nav-link-active'</span> : <span class="string">'rc-nav-link'</span>}&gt;
+          {item.label}
+        &lt;/Link&gt;
+      ))}
+    &lt;/nav&gt;
+  )
+}</code></pre>
+</div>
+
+<!-- ======================== MODULE PAGES ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-4">4</div>
+        <h2>Phase 4 — Module Pages (20+ pages)</h2>
+    </div>
+
+    <h3>4.1 Page Conversion Pattern</h3>
+    <div class="card">
+        <div class="card-header">Before (Inertia + React)</div>
+<pre><code><span class="comment">// resources/js/Pages/Farmer/HarvestIndex.jsx</span>
+<span class="keyword">import</span> AuthenticatedLayout <span class="keyword">from</span> <span class="string">'@/Layouts/AuthenticatedLayout'</span>
+<span class="keyword">import</span> { router } <span class="keyword">from</span> <span class="string">'@inertiajs/react'</span>
+
+<span class="keyword">export default function</span> <span class="function">HarvestIndex</span>({ auth, batches }) {
+  <span class="keyword">return</span> (
+    &lt;AuthenticatedLayout header={&lt;h2&gt;Harvests&lt;/h2&gt;}&gt;
+      {batches.map(batch =&gt; (
+        &lt;div key={batch.id}&gt;{batch.rice_variety}&lt;/div&gt;
+      ))}
+    &lt;/AuthenticatedLayout&gt;
+  )
+}</code></pre>
+
+        <div class="card-header" style="margin-top: 20px;">After (Next.js Server Component)</div>
+<pre><code><span class="comment">// src/app/(protected)/farmer/harvest/page.tsx</span>
+<span class="keyword">import</span> { createClient } <span class="keyword">from</span> <span class="string">'@/lib/supabase/server'</span>
+<span class="keyword">import</span> HarvestList <span class="keyword">from</span> <span class="string">'@/components/farmers/HarvestList'</span>
+
+<span class="keyword">export default async function</span> <span class="function">HarvestPage</span>() {
+  <span class="keyword">const</span> supabase = <span class="keyword">await</span> createClient()
+  <span class="keyword">const</span> { data: batches } = <span class="keyword">await</span> supabase
+    .from(<span class="string">'harvest_batches'</span>)
+    .select(<span class="string">'*'</span>)
+    .order(<span class="string">'created_at'</span>, { ascending: <span class="keyword">false</span> })
+
+  <span class="keyword">return</span> &lt;HarvestList batches={batches} /&gt;
+}
+
+<span class="comment">// src/components/farmers/HarvestList.tsx (Client Component)</span>
+<span class="string">'use client'</span>
+<span class="keyword">export default function</span> <span class="function">HarvestList</span>({ batches }) {
+  <span class="keyword">return</span> (
+    &lt;div&gt;
+      {batches.map(batch =&gt; (
+        &lt;div key={batch.id}&gt;{batch.rice_variety}&lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  )
+}</code></pre>
+    </div>
+
+    <h3>4.2 Module Page Map</h3>
+    <div class="card">
+        <table>
+            <tr><th>Module</th><th>Current Page</th><th>Next.js Route</th><th>Type</th></tr>
+            <tr><td rowspan="4"><strong>Farmer</strong></td><td>HarvestIndex.jsx</td><td><code>/farmer/harvest</code></td><td>Server Component</td></tr>
+            <tr><td>CreateHarvest.jsx</td><td><code>/farmer/harvest/new</code></td><td>Server Action form</td></tr>
+            <tr><td>EditHarvest.jsx</td><td><code>/farmer/harvest/[id]/edit</code></td><td>Server Action form</td></tr>
+            <tr><td>Offers.jsx</td><td><code>/farmer/offers</code></td><td>Server + Realtime</td></tr>
+            <tr><td rowspan="7"><strong>Miller</strong></td><td>Marketplace.jsx</td><td><code>/miller/marketplace</code></td><td>Server Component</td></tr>
+            <tr><td>IncomingPalay.jsx</td><td><code>/miller/incoming</code></td><td>Server Component</td></tr>
+            <tr><td>Inventory.jsx</td><td><code>/miller/inventory</code></td><td>Server Component</td></tr>
+            <tr><td>ProcessedInventory.jsx</td><td><code>/miller/processed-inventory</code></td><td>Server Component</td></tr>
+            <tr><td>MillerOrders.jsx</td><td><code>/miller/orders</code></td><td>Server + Realtime</td></tr>
+            <tr><td>Transport.jsx</td><td><code>/miller/transport</code></td><td>Client Component</td></tr>
+            <tr><td>ShippingSettings.jsx</td><td><code>/miller/shipping-settings</code></td><td>Server Action</td></tr>
+            <tr><td rowspan="3"><strong>Retailer</strong></td><td>Marketplace.jsx</td><td><code>/retailer/marketplace</code></td><td>Server + Client form</td></tr>
+            <tr><td>MyOrders.jsx</td><td><code>/retailer/orders</code></td><td>Server + Realtime</td></tr>
+            <tr><td>MyPurchases.jsx</td><td><code>/retailer/purchases</code></td><td>Server Component</td></tr>
+            <tr><td><strong>Driver</strong></td><td>Dashboard.jsx</td><td><code>/driver/dashboard</code></td><td>Client + Realtime</td></tr>
+            <tr><td rowspan="2"><strong>Admin</strong></td><td>Dashboard.jsx</td><td><code>/admin/dashboard</code></td><td>Server Component</td></tr>
+            <tr><td>MunicipalitiesManager.jsx</td><td><code>/admin/municipalities</code></td><td>Server Action CRUD</td></tr>
+            <tr><td rowspan="4"><strong>Analytics</strong></td><td>FarmerDashboard.jsx</td><td><code>/analytics/farmer</code></td><td>Client (Recharts)</td></tr>
+            <tr><td>MillerDashboard.jsx</td><td><code>/analytics/miller</code></td><td>Client (Recharts)</td></tr>
+            <tr><td>RetailerDashboard.jsx</td><td><code>/analytics/retailer</code></td><td>Client (Recharts)</td></tr>
+            <tr><td>AdminDashboard.jsx</td><td><code>/analytics/admin</code></td><td>Client (Recharts)</td></tr>
+        </table>
+    </div>
+
+    <h3>4.3 Form Submission Pattern (Server Actions)</h3>
+<pre><code><span class="comment">// src/app/(protected)/farmer/harvest/new/actions.ts</span>
+<span class="string">'use server'</span>
+
+<span class="keyword">import</span> { createClient } <span class="keyword">from</span> <span class="string">'@/lib/supabase/server'</span>
+<span class="keyword">import</span> { redirect } <span class="keyword">from</span> <span class="string">'next/navigation'</span>
+
+<span class="keyword">export async function</span> <span class="function">createHarvest</span>(formData: FormData) {
+  <span class="keyword">const</span> supabase = <span class="keyword">await</span> createClient()
+  <span class="keyword">const</span> { data: { user } } = <span class="keyword">await</span> supabase.auth.getUser()
+
+  <span class="keyword">await</span> supabase.from(<span class="string">'harvest_batches'</span>).insert({
+    user_id: user!.id,
+    rice_variety: formData.get(<span class="string">'rice_variety'</span>),
+    number_of_bags: Number(formData.get(<span class="string">'number_of_bags'</span>)),
+    total_weight: Number(formData.get(<span class="string">'total_weight'</span>)),
+    harvest_date: formData.get(<span class="string">'harvest_date'</span>),
+    price_per_kg: Number(formData.get(<span class="string">'price_per_kg'</span>)),
+    status: <span class="string">'available'</span>,
+  })
+
+  redirect(<span class="string">'/farmer/harvest'</span>)
+}</code></pre>
+</div>
+
+<!-- ======================== BUSINESS LOGIC ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-5">5</div>
+        <h2>Phase 5 — Business Logic Porting</h2>
+    </div>
+
+    <h3>5.1 PaymentService → PostgreSQL RPC</h3>
+    <p>The atomic wallet transfer <strong>must live at the database level</strong> to preserve the atomicity guarantee.</p>
+<pre><code><span class="comment">-- Supabase SQL: Atomic fund transfer</span>
+<span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">transfer_funds</span>(
+  p_from_user_id <span class="type">uuid</span>,
+  p_to_user_id <span class="type">uuid</span>,
+  p_amount <span class="type">numeric</span>,
+  p_description <span class="type">text</span>,
+  p_reference_type <span class="type">text</span> <span class="keyword">DEFAULT NULL</span>,
+  p_reference_id <span class="type">uuid</span> <span class="keyword">DEFAULT NULL</span>
+) <span class="keyword">RETURNS</span> <span class="type">boolean</span> <span class="keyword">AS</span> $$
+<span class="keyword">DECLARE</span>
+  v_already_recorded <span class="type">boolean</span>;
+<span class="keyword">BEGIN</span>
+  <span class="comment">-- Idempotency check</span>
+  <span class="keyword">SELECT EXISTS</span>(
+    <span class="keyword">SELECT</span> 1 <span class="keyword">FROM</span> ledger_entries
+    <span class="keyword">WHERE</span> user_id = p_from_user_id <span class="keyword">AND</span> type = <span class="string">'debit'</span>
+    <span class="keyword">AND</span> reference_type = p_reference_type
+    <span class="keyword">AND</span> reference_id = p_reference_id
+  ) <span class="keyword">INTO</span> v_already_recorded;
+  <span class="keyword">IF</span> v_already_recorded <span class="keyword">THEN RETURN FALSE</span>; <span class="keyword">END IF</span>;
+
+  <span class="comment">-- Atomic debit + credit</span>
+  <span class="keyword">UPDATE</span> wallets <span class="keyword">SET</span> balance = balance - p_amount <span class="keyword">WHERE</span> user_id = p_from_user_id;
+  <span class="keyword">UPDATE</span> wallets <span class="keyword">SET</span> balance = balance + p_amount <span class="keyword">WHERE</span> user_id = p_to_user_id;
+
+  <span class="keyword">INSERT INTO</span> ledger_entries (user_id, amount, type, reference_type, reference_id, description)
+  <span class="keyword">VALUES</span>
+    (p_from_user_id, p_amount, <span class="string">'debit'</span>, p_reference_type, p_reference_id, p_description),
+    (p_to_user_id, p_amount, <span class="string">'credit'</span>, p_reference_type, p_reference_id, p_description);
+
+  <span class="keyword">RETURN TRUE</span>;
+<span class="keyword">END</span>;
+$$ <span class="keyword">LANGUAGE</span> plpgsql <span class="keyword">SECURITY DEFINER</span>;</code></pre>
+
+    <p><strong>Call from Next.js:</strong></p>
+<pre><code><span class="comment">// src/lib/payment.ts</span>
+<span class="keyword">import</span> { createClient } <span class="keyword">from</span> <span class="string">'@/lib/supabase/server'</span>
+
+<span class="keyword">export async function</span> <span class="function">transferFunds</span>(
+  fromUserId: string, toUserId: string,
+  amount: number, description: string,
+  referenceType?: string, referenceId?: string
+) {
+  <span class="keyword">const</span> supabase = <span class="keyword">await</span> createClient()
+  <span class="keyword">const</span> { data, error } = <span class="keyword">await</span> supabase.rpc(<span class="string">'transfer_funds'</span>, {
+    p_from_user_id: fromUserId,
+    p_to_user_id: toUserId,
+    p_amount: amount,
+    p_description: description,
+    p_reference_type: referenceType || <span class="keyword">null</span>,
+    p_reference_id: referenceId || <span class="keyword">null</span>,
+  })
+  <span class="keyword">if</span> (error) <span class="keyword">throw new</span> Error(error.message)
+  <span class="keyword">return</span> data
+}</code></pre>
+
+    <h3>5.2 MunicipalityHelper → TypeScript Utility</h3>
+    <p>The BFS algorithm uses a <strong>static graph</strong> — no database needed. Pure TypeScript:</p>
+<pre><code><span class="comment">// src/lib/municipality.ts</span>
+<span class="keyword">const</span> iloiloNeighbors: Record&lt;string, string[]&gt; = {
+  <span class="string">"Passi City"</span>: [<span class="string">"San Enrique"</span>, <span class="string">"Dueñas"</span>, <span class="string">"Dumarao"</span>, <span class="string">"Calinog"</span>, <span class="string">"Mina"</span>, <span class="string">"Bingawan"</span>],
+  <span class="string">"San Enrique"</span>: [<span class="string">"Passi City"</span>, <span class="string">"Dueñas"</span>, <span class="string">"Banate"</span>, <span class="string">"Barotac Nuevo"</span>],
+  <span class="comment">// ... 40+ municipalities (exact same graph)</span>
+}
+
+<span class="keyword">function</span> <span class="function">bfs</span>(start: string, end: string): number {
+  <span class="keyword">if</span> (!iloiloNeighbors[start] || !iloiloNeighbors[end]) <span class="keyword">return</span> 3
+  <span class="keyword">const</span> queue: [string, number][] = [[start, 0]]
+  <span class="keyword">const</span> visited = <span class="keyword">new</span> Set([start])
+  <span class="keyword">while</span> (queue.length) {
+    <span class="keyword">const</span> [current, dist] = queue.shift()!
+    <span class="keyword">if</span> (current === end) <span class="keyword">return</span> dist
+    <span class="keyword">for</span> (<span class="keyword">const</span> neighbor <span class="keyword">of</span> iloiloNeighbors[current] || []) {
+      <span class="keyword">if</span> (!visited.has(neighbor)) {
+        visited.add(neighbor)
+        queue.push([neighbor, dist + 1])
+      }
+    }
+  }
+  <span class="keyword">return</span> 3
+}
+
+<span class="keyword">export function</span> <span class="function">calculateDeliveryFee</span>(
+  start: string, end: string,
+  baseFee: number, extraFeePerMunicipality: number
+): number {
+  <span class="keyword">if</span> (start === end) <span class="keyword">return</span> 0
+  <span class="keyword">const</span> jumps = bfs(start, end) || 1
+  <span class="keyword">return</span> baseFee + Math.floor((jumps - 1) / 2) * extraFeePerMunicipality
+}</code></pre>
+
+    <h3>5.3 Booking State Machine → Server Action</h3>
+<pre><code><span class="comment">// src/app/api/bookings/[id]/status/route.ts</span>
+<span class="keyword">import</span> { createClient } <span class="keyword">from</span> <span class="string">'@/lib/supabase/server'</span>
+<span class="keyword">import</span> { NextRequest, NextResponse } <span class="keyword">from</span> <span class="string">'next/server'</span>
+
+<span class="keyword">const</span> validTransitions: Record&lt;string, string&gt; = {
+  pending: <span class="string">'assigned'</span>,
+  assigned: <span class="string">'at_pickup'</span>,
+  at_pickup: <span class="string">'in_transit'</span>,
+  in_transit: <span class="string">'delivered'</span>,
+}
+
+<span class="keyword">export async function</span> <span class="function">POST</span>(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  <span class="keyword">const</span> supabase = <span class="keyword">await</span> createClient()
+  <span class="keyword">const</span> { status } = <span class="keyword">await</span> request.json()
+
+  <span class="keyword">const</span> { data: booking } = <span class="keyword">await</span> supabase
+    .from(<span class="string">'bookings'</span>).select(<span class="string">'status, driver_id'</span>).eq(<span class="string">'id'</span>, params.id).single()
+
+  <span class="keyword">if</span> (booking?.status !== validTransitions[status]) {
+    <span class="keyword">return</span> NextResponse.json({ error: <span class="string">'Invalid transition'</span> }, { status: 400 })
+  }
+
+  <span class="keyword">await</span> supabase.from(<span class="string">'bookings'</span>).update({ status }).eq(<span class="string">'id'</span>, params.id)
+  <span class="keyword">return</span> NextResponse.json({ success: <span class="keyword">true</span> })
+}</code></pre>
+</div>
+
+<!-- ======================== NOTIFICATIONS ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-6">6</div>
+        <h2>Phase 6 — Notification System</h2>
+    </div>
+
+    <h3>6.1 Database Triggers (replace Laravel Notification classes)</h3>
+<pre><code><span class="comment">-- Notify all millers when harvest is posted</span>
+<span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">notify_millers_on_harvest</span>()
+<span class="keyword">RETURNS TRIGGER AS</span> $$
+<span class="keyword">BEGIN</span>
+  <span class="keyword">IF</span> NEW.status = <span class="string">'available'</span> <span class="keyword">AND</span> (OLD.status <span class="keyword">IS DISTINCT FROM</span> <span class="string">'available'</span> <span class="keyword">OR</span> OLD <span class="keyword">IS NULL</span>) <span class="keyword">THEN</span>
+    <span class="keyword">INSERT INTO</span> notifications (user_id, type, data)
+    <span class="keyword">SELECT</span> id, <span class="string">'new_harvest_posted'</span>,
+      jsonb_build_object(<span class="string">'harvest_id'</span>, NEW.id, <span class="string">'variety'</span>, NEW.rice_variety)
+    <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> role = <span class="string">'miller'</span>;
+  <span class="keyword">END IF</span>;
+  <span class="keyword">RETURN</span> NEW;
+<span class="keyword">END</span>;
+$$ <span class="keyword">LANGUAGE</span> plpgsql;
+
+<span class="keyword">CREATE TRIGGER</span> trg_harvest_notification
+  <span class="keyword">AFTER INSERT OR UPDATE ON</span> harvest_batches
+  <span class="keyword">FOR EACH ROW EXECUTE FUNCTION</span> <span class="function">notify_millers_on_harvest</span>();</code></pre>
+
+    <h3>6.2 All 11 Notification Triggers</h3>
+    <div class="card">
+        <table>
+            <tr><th>Notification</th><th>Trigger Table</th><th>Event</th></tr>
+            <tr><td>NewHarvestPosted</td><td><code>harvest_batches</code></td><td>INSERT / status → 'available'</td></tr>
+            <tr><td>InterestReceived</td><td><code>harvest_interests</code></td><td>INSERT</td></tr>
+            <tr><td>DriverAssigned</td><td><code>bookings</code></td><td>UPDATE → 'assigned'</td></tr>
+            <tr><td>PickupScheduled</td><td><code>harvest_batches</code></td><td>UPDATE scheduled_pickup_date</td></tr>
+            <tr><td>DeliveryScheduled</td><td><code>orders</code></td><td>UPDATE scheduled_delivery_date</td></tr>
+            <tr><td>BookingAssigned</td><td><code>bookings</code></td><td>UPDATE → 'assigned'</td></tr>
+            <tr><td>WeightLogged</td><td><code>bookings</code></td><td>UPDATE → 'at_pickup'</td></tr>
+            <tr><td>PaymentPaid</td><td><code>ledger_entries</code></td><td>INSERT (credit)</td></tr>
+            <tr><td>LowStock</td><td><code>finished_rice_stocks</code></td><td>UPDATE (below threshold)</td></tr>
+            <tr><td>RiceReadyForPickup</td><td><code>orders</code></td><td>UPDATE → 'ready_for_pickup'</td></tr>
+            <tr><td>ReleaseRequested</td><td><code>orders</code></td><td>UPDATE (self-pickup)</td></tr>
+        </table>
+    </div>
+
+    <h3>6.3 Client-Side Realtime Subscription</h3>
+<pre><code><span class="comment">// src/hooks/useNotifications.ts</span>
+<span class="string">'use client'</span>
+<span class="keyword">import</span> { useEffect, useState } <span class="keyword">from</span> <span class="string">'react'</span>
+<span class="keyword">import</span> { createClient } <span class="keyword">from</span> <span class="string">'@/lib/supabase/client'</span>
+
+<span class="keyword">export function</span> <span class="function">useNotifications</span>(userId: string) {
+  <span class="keyword">const</span> [notifications, setNotifications] = useState([])
+
+  useEffect(() =&gt; {
+    <span class="keyword">const</span> supabase = createClient()
+    <span class="keyword">const</span> channel = supabase
+      .channel(<span class="string">'notifications'</span>)
+      .on(<span class="string">'postgres_changes'</span>,
+        { event: <span class="string">'INSERT'</span>, schema: <span class="string">'public'</span>, table: <span class="string">'notifications'</span>,
+          filter: <span class="string">`user_id=eq.${userId}`</span> },
+        (payload) =&gt; setNotifications(prev =&gt; [payload.new, ...prev])
+      )
+      .subscribe()
+
+    <span class="keyword">return</span> () =&gt; { supabase.removeChannel(channel) }
+  }, [userId])
+
+  <span class="keyword">return</span> notifications
+}</code></pre>
+</div>
+
+<!-- ======================== TESTING ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-7">7</div>
+        <h2>Phase 7 — Testing + Verification</h2>
+    </div>
+
+    <h3>7.1 Functional Test Checklist</h3>
+    <ul class="checklist">
+        <li>Login with each role → correct dashboard redirect</li>
+        <li>Register new user with role selection</li>
+        <li>Farmer: create harvest → miller sees in marketplace</li>
+        <li>Miller: express interest → farmer sees offer → accept handshake</li>
+        <li>Booking created → driver claims → pickup → transit → delivered</li>
+        <li>Payment: wallet debit/credit, ledger integrity check</li>
+        <li>Retailer: browse rice → place order → delivery → confirm receipt</li>
+        <li>Notifications appear in real-time (no polling)</li>
+        <li>Analytics dashboards load with Recharts</li>
+        <li>Admin: municipality CRUD, harvest/order deletion</li>
+        <li>Driver: Grab-style job board, status transitions</li>
+        <li>BFS delivery fee calculation matches Laravel version</li>
+    </ul>
+
+    <h3>7.2 RLS Security Testing</h3>
+    <ul class="checklist">
+        <li>Farmer cannot access miller's incoming palay</li>
+        <li>Miller cannot modify farmer's harvest data</li>
+        <li>Driver cannot see retailer's orders</li>
+        <li>Wallet/ledger only visible to owner</li>
+        <li>Admin can access all data</li>
+        <li>Unauthenticated user redirected to login</li>
+    </ul>
+
+    <h3>7.3 Visual Comparison</h3>
+    <ul class="checklist">
+        <li>rc-theme CSS classes render identically</li>
+        <li>Sidebar navigation matches per role</li>
+        <li>Modal/Dropdown animations work</li>
+        <li>DeliveryStatusStepper renders correctly</li>
+        <li>Responsive layout (mobile sidebar)</li>
+        <li>Typography (Libre Baskerville, Playfair Display)</li>
+    </ul>
+</div>
+
+<!-- ======================== DEPLOYMENT ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number phase-8">8</div>
+        <h2>Phase 8 — Vercel Deployment</h2>
+    </div>
+
+    <h3>8.1 Vercel Setup</h3>
+<pre><code><span class="comment"># Install Vercel CLI</span>
+npm i -g vercel
+
+<span class="comment"># Deploy to production</span>
+vercel --prod</code></pre>
+
+    <h3>8.2 Environment Variables (Vercel Dashboard)</h3>
+<pre><code><span class="keyword">NEXT_PUBLIC_SUPABASE_URL</span>=https://tdvjnowvumpvphhharur.supabase.co
+<span class="keyword">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>=your-anon-key
+<span class="keyword">SUPABASE_SERVICE_ROLE_KEY</span>=your-service-role-key   <span class="comment"># server-side only</span></code></pre>
+
+    <h3>8.3 Supabase Production Config</h3>
+    <ul>
+        <li>Use the <strong>same Supabase project</strong> — no data migration needed</li>
+        <li>Enable Point-in-Time Recovery in Supabase dashboard</li>
+        <li>Connection pooling is built-in (Supabase handles this)</li>
+        <li>Add Vercel domain to Supabase Auth redirect URLs</li>
+    </ul>
+
+    <div class="info-box warning">
+        <div class="label">Important</div>
+        <p style="margin:0;">You can keep the Render Laravel deployment running alongside Next.js during migration. Use different Supabase branches or a staging environment to test safely before cutting over.</p>
+    </div>
+</div>
+
+<!-- ======================== TIMELINE ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted);">⏱</div>
+        <h2>Timeline Summary</h2>
+    </div>
+
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="days">1</div>
+            <div class="label">Phase 0: Scaffolding</div>
+        </div>
+        <div class="timeline-item">
+            <div class="days">2</div>
+            <div class="label">Phase 1: Schema + RLS</div>
+        </div>
+        <div class="timeline-item">
+            <div class="days">3</div>
+            <div class="label">Phase 2: Auth + Middleware</div>
+        </div>
+        <div class="timeline-item">
+            <div class="days">3</div>
+            <div class="label">Phase 3: Layout + UI</div>
+        </div>
+        <div class="timeline-item">
+            <div class="days">11</div>
+            <div class="label">Phase 4: Module Pages</div>
+        </div>
+        <div class="timeline-item">
+            <div class="days">5</div>
+            <div class="label">Phase 5: Business Logic</div>
+        </div>
+        <div class="timeline-item">
+            <div class="days">3</div>
+            <div class="label">Phase 6: Notifications</div>
+        </div>
+        <div class="timeline-item">
+            <div class="days">3</div>
+            <div class="label">Phase 7: Testing</div>
+        </div>
+        <div class="timeline-item">
+            <div class="days">1</div>
+            <div class="label">Phase 8: Deploy</div>
+        </div>
+        <div class="timeline-item" style="border-color: var(--green);">
+            <div class="days" style="color: var(--green);">~22</div>
+            <div class="label">Total Days</div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== RISK ======================== -->
+<div class="section">
+    <div class="section-header">
+        <div class="phase-number" style="background: rgba(248, 113, 113, 0.15); color: var(--red);">⚠</div>
+        <h2>Risk Mitigation</h2>
+    </div>
+
+    <div class="card">
+        <table>
+            <tr><th>Risk</th><th>Mitigation</th></tr>
+            <tr><td>UUID migration breaks data</td><td>Use UUID only for new auth users; map old integer IDs via a lookup column</td></tr>
+            <tr><td>RLS policies too permissive</td><td>Test with <code>SET ROLE</code> in SQL; use Supabase policy testing UI</td></tr>
+            <tr><td>Payment atomicity lost</td><td>Use <code>SECURITY DEFINER</code> functions; test with concurrent transactions</td></tr>
+            <tr><td>Realtime missed events</td><td>Supabase Realtime has built-in retry; add polling fallback for critical paths</td></tr>
+            <tr><td>Visual differences</td><td>Copy rc-theme.css verbatim; same Tailwind config; pixel-compare key pages</td></tr>
+            <tr><td>Inertia partial reloads gone</td><td>Use @tanstack/query with refetchInterval; Supabase Realtime replaces most polling</td></tr>
+            <tr><td>Rollback needed</td><td>Keep Render Laravel running until Next.js is fully verified in production</td></tr>
+        </table>
+    </div>
+</div>
+
+</div><!-- end container -->
+
+<div class="footer">
+    <p>Rice Connect v2 — Migration Plan</p>
+    <p>Generated from codebase analysis at <code>C:\Users\Client\rice-connect-v2</code></p>
+    <p>Laravel 12 + Inertia.js + React → Next.js 14 + Supabase</p>
+</div>
+
+</body>
+</html>
