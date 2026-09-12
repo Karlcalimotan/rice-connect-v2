@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useUser } from '@/hooks/useUser'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useSidebar } from '@/stores/sidebar'
@@ -47,7 +47,26 @@ export default function ProtectedLayout({
   const { unreadCount, markAsRead, notifications } = useNotifications(user?.id || '')
   const { isOpen, toggle, close } = useSidebar()
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  const handleLogout = async () => {
+    if (!confirm('Are you sure you want to log out?')) return
+    await fetch('/api/auth/signout', { method: 'POST' })
+    router.push('/login')
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const navItems = user?.role === 'MILLER'
     ? millerNavItems
@@ -123,6 +142,15 @@ export default function ProtectedLayout({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </Link>
+              <button
+                onClick={handleLogout}
+                className="ml-2 text-gray-400 hover:text-white"
+                title="Logout"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -145,7 +173,7 @@ export default function ProtectedLayout({
             {/* Notifications */}
             <div className="relative">
               <button
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={() => { setShowNotifications(!showNotifications); setShowUserMenu(false) }}
                 className="relative text-gray-500 hover:text-gray-700"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,6 +213,50 @@ export default function ProtectedLayout({
                       ))
                     )}
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* User menu */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false) }}
+                className="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
+                  {user?.firstName?.[0]}{user?.lastName?.[0]}
+                </div>
+                <span className="hidden font-medium md:inline">{user?.firstName}</span>
+                <svg className={`h-4 w-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showUserMenu && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border bg-white py-1 shadow-lg">
+                  <div className="border-b px-4 py-2">
+                    <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  </div>
+                  <Link
+                    href="/profile"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => { setShowUserMenu(false); handleLogout() }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                  </button>
                 </div>
               )}
             </div>
