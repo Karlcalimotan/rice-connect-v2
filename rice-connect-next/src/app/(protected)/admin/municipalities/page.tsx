@@ -8,8 +8,8 @@ import InputLabel from '@/components/ui/InputLabel'
 type Municipality = {
   id: number
   name: string
-  distance_index: number
-  created_at: string
+  distanceIndex: number
+  createdAt: string
 }
 
 export default function AdminMunicipalitiesPage() {
@@ -41,7 +41,7 @@ export default function AdminMunicipalitiesPage() {
     e.preventDefault()
     const payload = {
       name: form.name,
-      distance_index: parseInt(form.distanceIndex) || 0,
+      distanceIndex: parseInt(form.distanceIndex) || 0,
     }
 
     try {
@@ -69,7 +69,7 @@ export default function AdminMunicipalitiesPage() {
   }
 
   const handleEdit = (m: Municipality) => {
-    setForm({ name: m.name, distanceIndex: m.distance_index.toString() })
+    setForm({ name: m.name, distanceIndex: m.distanceIndex.toString() })
     setEditingId(m.id)
     setShowForm(true)
   }
@@ -175,7 +175,7 @@ export default function AdminMunicipalitiesPage() {
                   <tr key={m.id} className="bg-white hover:bg-gray-50">
                     <td className="px-4 py-2 text-gray-400">{i + 1}</td>
                     <td className="px-4 py-2 font-medium text-gray-900">{m.name}</td>
-                    <td className="px-4 py-2 text-gray-500">{m.distance_index}</td>
+                    <td className="px-4 py-2 text-gray-500">{m.distanceIndex}</td>
                     <td className="px-4 py-2 text-right">
                       <button onClick={() => handleEdit(m)} className="mr-2 text-xs font-medium text-indigo-600 hover:text-indigo-500">Edit</button>
                       <button onClick={() => handleDelete(m.id, m.name)} className="text-xs font-medium text-red-600 hover:text-red-500">Delete</button>

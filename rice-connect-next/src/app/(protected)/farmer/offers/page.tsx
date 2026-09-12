@@ -7,17 +7,17 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 
 type Offer = {
   id: number
-  rice_variety: string
-  total_weight: number
-  number_of_bags: number
-  harvest_date: string
+  riceVariety: string
+  totalWeight: number
+  numberOfBags: number
+  harvestDate: string
   status: string
-  harvest_interests: Array<{
+  interests: Array<{
     id: number
-    miller_id: string
-    users: {
-      first_name: string
-      last_name: string
+    millerId: string
+    miller: {
+      firstName: string
+      lastName: string
       municipality: string
     } | null
   }>
@@ -37,7 +37,7 @@ export default function FarmerOffersPage() {
       const res = await fetch('/api/offers')
       const data = await res.json()
 
-      if (data) setOffers(data as Offer[])
+      if (data?.offers) setOffers(data.offers as Offer[])
       setLoading(false)
     }
 
@@ -101,12 +101,12 @@ export default function FarmerOffersPage() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{offer.rice_variety}</h3>
+                  <h3 className="font-semibold text-gray-900">{offer.riceVariety}</h3>
                   <p className="text-sm text-gray-500">
-                    {offer.number_of_bags} bags • {offer.total_weight} kg
+                    {offer.numberOfBags} bags • {offer.totalWeight} kg
                   </p>
                   <p className="text-xs text-gray-400">
-                    Harvested {formatDate(offer.harvest_date)}
+                    Harvested {formatDate(offer.harvestDate)}
                   </p>
                 </div>
               </div>
@@ -114,21 +114,21 @@ export default function FarmerOffersPage() {
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-700">Interested Millers:</p>
                 <div className="mt-2 space-y-3">
-                  {offer.harvest_interests.map((interest) => (
+                  {offer.interests.map((interest) => (
                     <div
                       key={interest.id}
                       className="flex items-center justify-between rounded-md bg-gray-50 p-3"
                     >
                       <div>
                         <p className="font-medium text-gray-900">
-                          {interest.users?.first_name} {interest.users?.last_name}
+                          {interest.miller?.firstName} {interest.miller?.lastName}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {interest.users?.municipality}
+                          {interest.miller?.municipality}
                         </p>
                       </div>
                       <button
-                        onClick={() => handleAccept(offer.id, interest.miller_id)}
+                        onClick={() => handleAccept(offer.id, interest.millerId)}
                         disabled={accepting === offer.id}
                         className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-50"
                       >

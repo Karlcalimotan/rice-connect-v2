@@ -7,14 +7,14 @@ import TextInput from '@/components/ui/TextInput'
 
 type HarvestBatch = {
   id: number
-  rice_variety: string
-  total_weight: number
-  price_per_kg: number | null
+  riceVariety: string
+  totalWeight: number
+  pricePerKg: number | null
   status: string
-  harvest_date: string
-  number_of_bags: number
-  user_id: string
-  users: { first_name: string; last_name: string; municipality: string } | null
+  harvestDate: string
+  numberOfBags: number
+  userId: string
+  farmer: { firstName: string; lastName: string; municipality: string } | null
 }
 
 export default function FarmerMarketplacePage() {
@@ -27,7 +27,7 @@ export default function FarmerMarketplacePage() {
       const res = await fetch('/api/marketplace?status=unsold')
       if (res.ok) {
         const data = await res.json()
-        setHarvests(data)
+        setHarvests(data.batches ?? [])
       }
       setLoading(false)
     }
@@ -37,8 +37,8 @@ export default function FarmerMarketplacePage() {
 
   const filtered = harvests.filter(
     (h) =>
-      h.rice_variety.toLowerCase().includes(search.toLowerCase()) ||
-      h.users?.municipality?.toLowerCase().includes(search.toLowerCase())
+      h.riceVariety.toLowerCase().includes(search.toLowerCase()) ||
+      h.farmer?.municipality?.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -69,21 +69,21 @@ export default function FarmerMarketplacePage() {
                 key={harvest.id}
                 className="rounded-lg border bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
               >
-                <h3 className="font-semibold text-gray-900">{harvest.rice_variety}</h3>
+                <h3 className="font-semibold text-gray-900">{harvest.riceVariety}</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  {harvest.number_of_bags} bags • {harvest.total_weight} kg
+                  {harvest.numberOfBags} bags • {harvest.totalWeight} kg
                 </p>
-                {harvest.price_per_kg && (
+                {harvest.pricePerKg && (
                   <p className="mt-1 text-lg font-bold text-green-600">
-                    {formatCurrency(harvest.price_per_kg)}/kg
+                    {formatCurrency(harvest.pricePerKg)}/kg
                   </p>
                 )}
                 <p className="mt-2 text-xs text-gray-400">
-                  Harvested {formatDate(harvest.harvest_date)}
+                  Harvested {formatDate(harvest.harvestDate)}
                 </p>
-                {harvest.users && (
+                {harvest.farmer && (
                   <p className="mt-1 text-xs text-gray-500">
-                    {harvest.users.first_name} {harvest.users.last_name} • {harvest.users.municipality}
+                    {harvest.farmer.firstName} {harvest.farmer.lastName} • {harvest.farmer.municipality}
                   </p>
                 )}
               </div>

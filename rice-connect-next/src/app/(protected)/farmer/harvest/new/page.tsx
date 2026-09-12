@@ -47,16 +47,13 @@ export default function NewHarvestPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_id: user.id,
-        rice_variety: formData.riceVariety,
-        number_of_bags: parseInt(formData.numberOfBags),
-        total_weight: parseFloat(formData.totalWeight),
-        price_per_kg: formData.pricePerKg ? parseFloat(formData.pricePerKg) : null,
-        harvest_date: formData.harvestDate,
+        riceVariety: formData.riceVariety,
+        numberOfBags: parseInt(formData.numberOfBags),
+        totalWeight: parseFloat(formData.totalWeight),
+        pricePerKg: formData.pricePerKg ? parseFloat(formData.pricePerKg) : null,
+        harvestDate: formData.harvestDate,
         status: 'available',
-        delivery_status: 'Pending',
-        delivery_type: 'palay',
-        hidden_from_farmer: false,
+        deliveryType: 'palay',
       }),
     })
 
@@ -70,11 +67,11 @@ export default function NewHarvestPage() {
     const newBatch = await res.json()
 
     // Notify all millers if opted in
-    if (formData.notifyMillers && newBatch) {
+    if (formData.notifyMillers && newBatch?.batch) {
       const { notifyAllMillers } = await import('@/lib/notifications')
       await notifyAllMillers('harvest.new', {
         message: `New ${formData.riceVariety} harvest available (${formData.totalWeight} kg)`,
-        batchId: newBatch.id,
+        batchId: newBatch.batch.id,
         farmerName: `${user.firstName} ${user.lastName}`,
         variety: formData.riceVariety,
         weight: formData.totalWeight,

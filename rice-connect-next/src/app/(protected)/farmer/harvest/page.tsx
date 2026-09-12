@@ -8,16 +8,16 @@ import Link from 'next/link'
 
 type HarvestBatch = {
   id: number
-  rice_variety: string
-  total_weight: number
-  price_per_kg: number | null
-  final_price_per_kg: number | null
-  actual_weight_kg: number | null
+  riceVariety: string
+  totalWeight: number
+  pricePerKg: number | null
+  finalPricePerKg: number | null
+  actualWeightKg: number | null
   status: string
-  harvest_date: string
-  delivery_status: string
-  number_of_bags: number
-  accepted_miller_id: string | null
+  harvestDate: string
+  deliveryStatus: string
+  numberOfBags: number
+  acceptedMillerId: string | null
 }
 
 export default function FarmerHarvestPage() {
@@ -35,7 +35,7 @@ export default function FarmerHarvestPage() {
       const res = await fetch(`/api/harvest?${params}`)
       if (res.ok) {
         const data = await res.json()
-        setHarvests(data)
+        setHarvests(data.batches ?? [])
       }
       setLoading(false)
     }
@@ -50,8 +50,8 @@ export default function FarmerHarvestPage() {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        hidden_from_farmer: true,
-        hidden_at: new Date().toISOString(),
+        hiddenFromFarmer: true,
+        hiddenAt: new Date().toISOString(),
       }),
     })
 
@@ -124,8 +124,8 @@ export default function FarmerHarvestPage() {
           <div className="space-y-4">
             {harvests.map((harvest) => {
               const payout =
-                harvest.actual_weight_kg && harvest.final_price_per_kg
-                  ? Number(harvest.actual_weight_kg) * Number(harvest.final_price_per_kg)
+                harvest.actualWeightKg && harvest.finalPricePerKg
+                  ? Number(harvest.actualWeightKg) * Number(harvest.finalPricePerKg)
                   : null
 
               return (
@@ -135,13 +135,13 @@ export default function FarmerHarvestPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{harvest.rice_variety}</h3>
+                      <h3 className="font-semibold text-gray-900">{harvest.riceVariety}</h3>
                       <p className="text-sm text-gray-500">
-                        {harvest.number_of_bags} bags • {harvest.total_weight} kg
+                        {harvest.numberOfBags} bags • {harvest.totalWeight} kg
                       </p>
-                      {harvest.price_per_kg && (
+                      {harvest.pricePerKg && (
                         <p className="text-sm text-gray-500">
-                          {formatCurrency(Number(harvest.price_per_kg))}/kg
+                          {formatCurrency(Number(harvest.pricePerKg))}/kg
                         </p>
                       )}
                       {payout !== null && (
@@ -150,9 +150,9 @@ export default function FarmerHarvestPage() {
                         </p>
                       )}
                       <p className="text-xs text-gray-400">
-                        Harvested {formatDate(harvest.harvest_date)}
+                        Harvested {formatDate(harvest.harvestDate)}
                       </p>
-                      {harvest.accepted_miller_id && (
+                      {harvest.acceptedMillerId && (
                         <p className="text-xs text-purple-600 mt-1">
                           Miller accepted
                         </p>
@@ -168,14 +168,14 @@ export default function FarmerHarvestPage() {
                       </span>
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          harvest.delivery_status === 'Pending'
+                          harvest.deliveryStatus === 'Pending'
                             ? 'bg-yellow-100 text-yellow-800'
-                            : harvest.delivery_status === 'In Transit'
+                            : harvest.deliveryStatus === 'In Transit'
                             ? 'bg-blue-100 text-blue-800'
                             : 'bg-green-100 text-green-800'
                         }`}
                       >
-                        {harvest.delivery_status}
+                        {harvest.deliveryStatus}
                       </span>
                       <div className="flex gap-2 mt-2">
                         {canEdit(harvest.status) && (

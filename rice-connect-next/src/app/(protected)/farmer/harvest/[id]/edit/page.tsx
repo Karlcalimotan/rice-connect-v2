@@ -42,9 +42,9 @@ export default function EditHarvestPage() {
       const data = await res.json()
 
       setFormData({
-        riceVariety: data.rice_variety,
-        harvestDate: data.harvest_date?.split('T')[0] || '',
-        condition: data.condition || 'fresh',
+        riceVariety: data.batch.riceVariety,
+        harvestDate: data.batch.harvestDate?.split('T')[0] || '',
+        condition: data.batch.condition || 'fresh',
       })
       setFetching(false)
     }
@@ -65,8 +65,8 @@ export default function EditHarvestPage() {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        rice_variety: formData.riceVariety,
-        harvest_date: formData.harvestDate,
+        riceVariety: formData.riceVariety,
+        harvestDate: formData.harvestDate,
         condition: formData.condition,
       }),
     })

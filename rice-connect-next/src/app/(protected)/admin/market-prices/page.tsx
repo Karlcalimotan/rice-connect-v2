@@ -56,10 +56,10 @@ export default function AdminMarketPricesPage() {
     if (!user) return
 
     const payload = {
-      rice_variety: form.riceVariety,
-      price_per_kg: parseFloat(form.pricePerKg),
-      market_region: form.marketRegion,
-      price_date: form.priceDate,
+      riceVariety: form.riceVariety,
+      pricePerKg: parseFloat(form.pricePerKg),
+      marketRegion: form.marketRegion,
+      priceDate: form.priceDate,
     }
 
     try {
