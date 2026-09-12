@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import TextInput from '@/components/ui/TextInput'
 import InputLabel from '@/components/ui/InputLabel'
@@ -50,34 +49,24 @@ export default function RegisterPage() {
       return
     }
 
-    const supabase = createClient()
-
-    // Create auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        contact: formData.contact,
+        municipality: formData.municipality,
+        role: formData.role,
+      }),
     })
 
-    if (authError) {
-      setError(authError.message)
-      setLoading(false)
-      return
-    }
+    const data = await res.json()
 
-    // Create user profile
-    const { error: profileError } = await supabase.from('users').insert({
-      id: authData.user?.id,
-      email: formData.email,
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      contact: formData.contact,
-      municipality: formData.municipality,
-      province: 'Iloilo',
-      role: formData.role,
-    })
-
-    if (profileError) {
-      setError('Failed to create user profile')
+    if (!res.ok) {
+      setError(data.error || 'Failed to create account')
       setLoading(false)
       return
     }
