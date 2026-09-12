@@ -9,11 +9,11 @@ import InputLabel from '@/components/ui/InputLabel'
 
 type MarketPrice = {
   id: number
-  rice_variety: string
-  price_per_kg: number
-  market_region: string
-  price_date: string
-  created_at: string
+  riceVariety: string
+  pricePerKg: number
+  marketRegion: string
+  priceDate: string
+  createdAt: string
 }
 
 const riceVarieties = [
@@ -88,10 +88,10 @@ export default function AdminMarketPricesPage() {
 
   const handleEdit = (price: MarketPrice) => {
     setForm({
-      riceVariety: price.rice_variety,
-      pricePerKg: price.price_per_kg.toString(),
-      marketRegion: price.market_region,
-      priceDate: price.price_date.split('T')[0],
+      riceVariety: price.riceVariety,
+      pricePerKg: price.pricePerKg.toString(),
+      marketRegion: price.marketRegion,
+      priceDate: price.priceDate.split('T')[0],
     })
     setEditingId(price.id)
     setShowForm(true)
@@ -113,7 +113,7 @@ export default function AdminMarketPricesPage() {
 
   // Group by variety for display
   const latestByVariety = prices.reduce((acc, price) => {
-    if (!acc[price.rice_variety]) acc[price.rice_variety] = price
+    if (!acc[price.riceVariety]) acc[price.riceVariety] = price
     return acc
   }, {} as Record<string, MarketPrice>)
 
@@ -207,11 +207,11 @@ export default function AdminMarketPricesPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {Object.values(latestByVariety).map((price) => (
                 <div key={price.id} className="rounded-lg border bg-white p-4 shadow-sm">
-                  <h4 className="font-semibold text-gray-900">{price.rice_variety}</h4>
+                  <h4 className="font-semibold text-gray-900">{price.riceVariety}</h4>
                   <p className="mt-1 text-2xl font-bold text-green-600">
-                    {formatCurrency(price.price_per_kg)}/kg
+                    {formatCurrency(price.pricePerKg)}/kg
                   </p>
-                  <p className="text-xs text-gray-400">{formatDate(price.price_date)}</p>
+                  <p className="text-xs text-gray-400">{formatDate(price.priceDate)}</p>
                 </div>
               ))}
             </div>
@@ -231,10 +231,10 @@ export default function AdminMarketPricesPage() {
                 <tbody className="divide-y">
                   {prices.map((price) => (
                     <tr key={price.id} className="bg-white">
-                      <td className="px-4 py-2 font-medium text-gray-900">{price.rice_variety}</td>
-                      <td className="px-4 py-2 text-green-600 font-semibold">{formatCurrency(price.price_per_kg)}</td>
-                      <td className="px-4 py-2 text-gray-500">{price.market_region}</td>
-                      <td className="px-4 py-2 text-gray-400">{formatDate(price.price_date)}</td>
+                      <td className="px-4 py-2 font-medium text-gray-900">{price.riceVariety}</td>
+                      <td className="px-4 py-2 text-green-600 font-semibold">{formatCurrency(price.pricePerKg)}</td>
+                      <td className="px-4 py-2 text-gray-500">{price.marketRegion}</td>
+                      <td className="px-4 py-2 text-gray-400">{formatDate(price.priceDate)}</td>
                       <td className="px-4 py-2 text-right">
                         <button onClick={() => handleEdit(price)} className="mr-2 text-xs font-medium text-indigo-600 hover:text-indigo-500">Edit</button>
                         <button onClick={() => handleDelete(price.id)} className="text-xs font-medium text-red-600 hover:text-red-500">Delete</button>

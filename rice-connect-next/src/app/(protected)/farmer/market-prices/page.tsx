@@ -6,10 +6,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 type MarketPrice = {
   id: number
-  rice_variety: string
-  price_per_kg: number
-  market_region: string
-  price_date: string
+  riceVariety: string
+  pricePerKg: number
+  marketRegion: string
+  priceDate: string
 }
 
 const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#ea580c', '#7c3aed', '#0891b2', '#ca8a04', '#be185d']
@@ -24,33 +24,33 @@ export default function MarketPricesPage() {
       const res = await fetch('/api/market-prices')
       const data = await res.json()
 
-      if (data) setPrices(data)
+      if (data?.prices) setPrices(data.prices)
       setLoading(false)
     }
 
     fetchPrices()
   }, [])
 
-  const varieties = [...new Set(prices.map((p) => p.rice_variety))]
+  const varieties = [...new Set(prices.map((p) => p.riceVariety))]
   const filtered = selectedVariety === 'all'
     ? prices
-    : prices.filter((p) => p.rice_variety === selectedVariety)
+    : prices.filter((p) => p.riceVariety === selectedVariety)
 
   // Group by date + variety for recharts
-  const dates = [...new Set(filtered.map((p) => p.price_date.split('T')[0]))].sort()
+  const dates = [...new Set(filtered.map((p) => p.priceDate.split('T')[0]))].sort()
   const chartData = dates.map((date) => {
     const entry: Record<string, string | number> = { date }
-    const dayPrices = filtered.filter((p) => p.price_date.startsWith(date))
+    const dayPrices = filtered.filter((p) => p.priceDate.startsWith(date))
     for (const p of dayPrices) {
-      entry[p.rice_variety] = p.price_per_kg
+      entry[p.riceVariety] = p.pricePerKg
     }
     return entry
   })
 
   // Latest prices card
   const latestByVariety = varieties.reduce((acc, variety) => {
-    const vp = prices.filter((p) => p.rice_variety === variety).sort((a, b) => new Date(b.price_date).getTime() - new Date(a.price_date).getTime())
-    acc[variety] = { current: vp[0]?.price_per_kg || 0, previous: vp[1]?.price_per_kg || 0 }
+    const vp = prices.filter((p) => p.riceVariety === variety).sort((a, b) => new Date(b.priceDate).getTime() - new Date(a.priceDate).getTime())
+    acc[variety] = { current: vp[0]?.pricePerKg || 0, previous: vp[1]?.pricePerKg || 0 }
     return acc
   }, {} as Record<string, { current: number; previous: number }>)
 
